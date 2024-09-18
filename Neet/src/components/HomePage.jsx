@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { db, auth } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -15,7 +16,7 @@ const HomePage = () => {
       const postsData = postsSnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
-      })); // Dodajemy id do każdego posta
+      }));
       setPosts(postsData);
     };
 
@@ -38,35 +39,63 @@ const HomePage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <header className="bg-gray-100 p-4 shadow-md flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Neet.</h1>
-        <nav>
-          {user && ( // Wyświetlaj przycisk tylko, gdy user jest zalogowany
-            <button
-              onClick={handleSignOut}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Wyloguj
-            </button>
-          )}
-        </nav>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center">
+      {/* Header */}
+      <header className="w-full bg-gray-900 p-1 shadow-md flex justify-between items-center">
+        <div className="flex items-center">
+          {/* Logo */}
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="w-16 h-16 mr-4 rounded-full"
+          />
+        </div>
+        {user && (
+          <button
+            onClick={handleSignOut}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Wyloguj
+          </button>
+        )}
       </header>
 
-      <main className="mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {posts.map((post) => (
-            <div key={post.id} className="bg-white rounded-lg shadow-md p-4">
-              <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
-              <p className="text-gray-600">{post.content}</p>
-              {/* Dodaj tutaj informacje o autorze, dacie itp. */}
-            </div>
-          ))}
+      {/* Main Content */}
+      <main className="w-full max-w-2xl mt-8 p-4">
+        <h2 className="text-2xl font-semibold text-center text-orange-400 mb-6">
+          Posty społeczności
+        </h2>
+
+        {/* Post Feed */}
+        <div className="space-y-6">
+          {posts.length === 0 ? (
+            <p className="text-center text-gray-400">
+              Brak postów do wyświetlenia.
+            </p>
+          ) : (
+            posts.map((post) => (
+              <div
+                key={post.id}
+                className="bg-gray-800 rounded-lg shadow-lg p-6"
+              >
+                <h3 className="text-xl font-bold text-orange-500 mb-2">
+                  {post.title}
+                </h3>
+                <p className="text-gray-300">{post.content}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {/* Jeśli chcesz dodać więcej informacji, np. datę lub autora */}
+                  Opublikowano przez {post.author || "Anonim"} |{" "}
+                  {post.date || "Brak daty"}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </main>
 
-      <footer className="bg-gray-200 p-4 mt-8 text-center">
-        <p>&copy; 2024 Neet. Social Network</p>
+      {/* Footer */}
+      <footer className="w-full bg-gray-900 p-4 mt-8 text-center">
+        <p className="text-gray-500">&copy; 2024 Neet. Social Network</p>
       </footer>
     </div>
   );
