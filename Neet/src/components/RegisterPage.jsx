@@ -1,38 +1,29 @@
 import { useState } from "react";
 import { auth } from "../firebaseConfig";
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/");
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
+    if (password !== confirmPassword) {
+      setError("Hasła muszą być takie same!");
+      return;
     }
-  };
-
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
 
     try {
-      await signInWithPopup(auth, provider);
-      navigate("/");
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigate("/login"); // Przekierowanie na stronę logowania po rejestracji
     } catch (error) {
       console.error(error);
-      alert(error.message);
+      setError(error.message);
     }
   };
 
@@ -41,13 +32,19 @@ const LoginPage = () => {
       {/* Logo */}
       <img src="/logo.png" alt="Logo" className="w-32 h-32 mb-3" />
 
-      {/* Login Form */}
       <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-8">
         <h1 className="text-4xl font-bold text-center text-orange-500 mb-6">
-          Logowanie
+          Rejestracja
         </h1>
 
-        <form onSubmit={handleLogin}>
+        {/* Error message */}
+        {error && (
+          <div className="text-red-500 bg-red-100 p-2 rounded mb-4 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleRegister}>
           <div className="mb-4">
             <label
               htmlFor="email"
@@ -64,7 +61,7 @@ const LoginPage = () => {
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <label
               htmlFor="password"
               className="block text-orange-500 text-sm font-bold mb-2"
@@ -80,49 +77,36 @@ const LoginPage = () => {
               required
             />
           </div>
+          <div className="mb-6">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-orange-500 text-sm font-bold mb-2"
+            >
+              Potwierdź hasło:
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              className="shadow appearance-none border border-orange-500 rounded w-full py-2 px-3 text-gray-200 bg-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-orange-500"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
           <div className="flex items-center justify-between">
             <button
               type="submit"
               className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
             >
-              Zaloguj się
+              Zarejestruj się
             </button>
           </div>
         </form>
 
-        <button
-          onClick={handleGoogleLogin}
-          className="flex items-center justify-center bg-orange-700 hover:bg-orange-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full mt-4"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 48 48"
-            className="w-6 h-6 mr-2"
-          >
-            <path
-              fill="#4285F4"
-              d="M24 9.5c3.84 0 6.35 1.66 7.8 3.04l5.74-5.74C33.7 3.67 29.28 2 24 2 14.83 2 7.35 8.48 4.77 16.96l6.75 5.26C13.36 15.73 18.16 9.5 24 9.5z"
-            />
-            <path
-              fill="#34A853"
-              d="M46.57 24.5c0-1.56-.14-3.11-.41-4.6H24v9.08h12.7c-.55 2.86-2.16 5.27-4.6 6.93l7.27 5.66C44.75 37.15 46.57 31.25 46.57 24.5z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M11.52 29.92c-1.35-.81-2.56-1.83-3.53-3.04l-6.75 5.26C4.56 37.74 8.94 41.21 14 42.6l5.3-7.04c-2.89-.79-5.33-2.5-7.05-4.64z"
-            />
-            <path
-              fill="#EA4335"
-              d="M24 46c5.52 0 10.15-1.83 13.53-4.95l-7.27-5.66c-2.05 1.33-4.7 2.13-7.26 2.13-5.82 0-10.75-3.94-12.53-9.32l-6.75 5.26C7.35 39.52 14.83 46 24 46z"
-            />
-          </svg>
-          <span>Zaloguj się przez Google</span>
-        </button>
-
         <p className="mt-4 text-center text-gray-400">
-          Nie masz konta?{" "}
-          <Link to="/register" className="text-orange-500 hover:underline">
-            Zarejestruj się
+          Masz konto?{" "}
+          <Link to="/login" className="text-orange-500 hover:underline">
+            Zaloguj się
           </Link>
         </p>
       </div>
@@ -130,4 +114,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
