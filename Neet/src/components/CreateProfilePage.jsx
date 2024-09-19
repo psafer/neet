@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { db } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/UseAuth';
 import { useNavigate } from 'react-router-dom';
 
 const CreateProfilePage = () => {

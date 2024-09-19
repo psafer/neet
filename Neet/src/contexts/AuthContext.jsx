@@ -1,12 +1,10 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const AuthContext = React.createContext();
+export const AuthContext = React.createContext(); // Export AuthContext
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,3 +33,8 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+
+// Add PropTypes validation for the children prop
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
