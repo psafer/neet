@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "../firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [user, setUser] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null); // State for profile picture
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,8 +23,20 @@ const HomePage = () => {
 
     fetchPosts();
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+
+        // Pobierz dane użytkownika z Firestore, w tym URL zdjęcia profilowego
+        const docRef = doc(db, 'profiles', currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const profileData = docSnap.data();
+          setProfilePicture(profileData.profilePicture); // Set profile picture URL
+        }
+      } else {
+        setUser(null);
+      }
     });
 
     return () => unsubscribe();
@@ -51,12 +64,33 @@ const HomePage = () => {
           />
         </div>
         {user && (
-          <button
-            onClick={handleSignOut}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Wyloguj
-          </button>
+          <div className="relative flex items-center">
+            {/* Miniaturka zdjęcia profilowego */}
+            {profilePicture ? (
+              <img
+                src={profilePicture}
+                alt="Profile"
+                className="w-10 h-10 rounded-full cursor-pointer"
+                onClick={() => navigate("/profile")} // Redirect to profile page on click
+              />
+            ) : (
+              // If no profile picture is available, show a default avatar
+              <div
+                className="w-10 h-10 bg-gray-600 rounded-full cursor-pointer"
+                onClick={() => navigate("/profile")}
+              />
+            )}
+
+            {/* Dropdown Menu */}
+            <div className="ml-4">
+              <button
+                onClick={handleSignOut}
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Wyloguj
+              </button>
+            </div>
+          </div>
         )}
       </header>
 
@@ -83,7 +117,6 @@ const HomePage = () => {
                 </h3>
                 <p className="text-gray-300">{post.content}</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {/* Jeśli chcesz dodać więcej informacji, np. datę lub autora */}
                   Opublikowano przez {post.author || "Anonim"} |{" "}
                   {post.date || "Brak daty"}
                 </p>
