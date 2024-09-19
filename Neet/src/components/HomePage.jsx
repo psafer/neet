@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
-import { db, auth } from "../firebaseConfig";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { db, auth, storage } from "../firebaseConfig";
+import { collection, getDocs, doc, getDoc, addDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [user, setUser] = useState(null);
-  const [profilePicture, setProfilePicture] = useState(null); // State for profile picture
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [newPost, setNewPost] = useState({ title: "", content: "", image: null });
+  const [uploading, setUploading] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,6 +22,10 @@ const HomePage = () => {
         ...doc.data(),
         id: doc.id,
       }));
+      
+      // Sort posts by date (newest first)
+      postsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
       setPosts(postsData);
     };
 
@@ -26,13 +34,11 @@ const HomePage = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-
-        // Pobierz dane użytkownika z Firestore, w tym URL zdjęcia profilowego
-        const docRef = doc(db, 'profiles', currentUser.uid);
+        const docRef = doc(db, "profiles", currentUser.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const profileData = docSnap.data();
-          setProfilePicture(profileData.profilePicture); // Set profile picture URL
+          setProfilePicture(profileData.profilePicture);
         }
       } else {
         setUser(null);
@@ -41,6 +47,50 @@ const HomePage = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewPost((prevPost) => ({ ...prevPost, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files[0]) {
+      setNewPost((prevPost) => ({ ...prevPost, image: e.target.files[0] }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+
+    let imageUrl = null;
+
+    if (newPost.image) {
+      const storageRef = ref(storage, `posts/${newPost.image.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, newPost.image);
+      const snapshot = await uploadTask;
+      imageUrl = await getDownloadURL(snapshot.ref);
+    }
+
+    try {
+      await addDoc(collection(db, "posts"), {
+        title: newPost.title,
+        content: newPost.content,
+        imageUrl: imageUrl || null,
+        author: user.displayName || "Anonim",
+        date: new Date().toLocaleString(),
+        userId: user.uid,
+      });
+
+      setNewPost({ title: "", content: "", image: null });
+      setUploading(false);
+      setIsFormOpen(false);
+      alert("Post został dodany!");
+    } catch (error) {
+      console.error("Błąd podczas dodawania postu:", error);
+      setUploading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -52,36 +102,32 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <header className="w-full bg-gray-900 p-1 shadow-md flex justify-between items-center">
+      <header className="bg-gray-900 p-4 shadow-md flex justify-between items-center w-full">
         <div className="flex items-center">
-          {/* Logo */}
           <img
             src="/logo.png"
             alt="Logo"
             className="w-16 h-16 mr-4 rounded-full"
           />
+          <span className="text-gray-400 text-2xl font-bold">Home Page</span>
         </div>
         {user && (
-          <div className="relative flex items-center">
-            {/* Miniaturka zdjęcia profilowego */}
+          <div className="flex items-center">
             {profilePicture ? (
               <img
                 src={profilePicture}
                 alt="Profile"
                 className="w-10 h-10 rounded-full cursor-pointer"
-                onClick={() => navigate("/profile")} // Redirect to profile page on click
+                onClick={() => navigate("/profile")}
               />
             ) : (
-              // If no profile picture is available, show a default avatar
               <div
                 className="w-10 h-10 bg-gray-600 rounded-full cursor-pointer"
                 onClick={() => navigate("/profile")}
               />
             )}
-
-            {/* Dropdown Menu */}
             <div className="ml-4">
               <button
                 onClick={handleSignOut}
@@ -94,42 +140,100 @@ const HomePage = () => {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="w-full max-w-2xl mt-8 p-4">
-        <h2 className="text-2xl font-semibold text-center text-orange-400 mb-6">
-          Posty społeczności
-        </h2>
-
-        {/* Post Feed */}
-        <div className="space-y-6">
-          {posts.length === 0 ? (
-            <p className="text-center text-gray-400">
-              Brak postów do wyświetlenia.
-            </p>
-          ) : (
-            posts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-gray-800 rounded-lg shadow-lg p-6"
+      {/* Main Content Wrapper */}
+      <div className="flex flex-1">
+        {/* Left Sidebar */}
+        <aside className="w-1/6 bg-gray-900 p-4">
+          {user && (
+            <div className="mb-6">
+              <button
+                onClick={() => setIsFormOpen(!isFormOpen)}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full"
               >
-                <h3 className="text-xl font-bold text-orange-500 mb-2">
-                  {post.title}
-                </h3>
-                <p className="text-gray-300">{post.content}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Opublikowano przez {post.author || "Anonim"} |{" "}
-                  {post.date || "Brak daty"}
-                </p>
-              </div>
-            ))
+                {isFormOpen ? "Zamknij formularz" : "Dodaj Post"}
+              </button>
+            </div>
           )}
-        </div>
-      </main>
+        </aside>
 
-      {/* Footer */}
-      <footer className="w-full bg-gray-900 p-4 mt-8 text-center">
-        <p className="text-gray-500">&copy; 2024 Neet. Social Network</p>
-      </footer>
+        {/* Main Content */}
+        <main className="w-5/6 p-4">
+          {/* Post Form */}
+          {isFormOpen && user && (
+            <form
+              onSubmit={handleSubmit}
+              className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl"
+            >
+              <h3 className="text-xl font-bold text-orange-500 mb-4">
+                Dodaj nowy post
+              </h3>
+              <input
+                type="text"
+                name="title"
+                placeholder="Tytuł"
+                value={newPost.title}
+                onChange={handleInputChange}
+                className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
+                required
+              />
+              <textarea
+                name="content"
+                placeholder="Treść posta"
+                value={newPost.content}
+                onChange={handleInputChange}
+                className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
+                required
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
+              />
+              <button
+                type="submit"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full"
+                disabled={uploading}
+              >
+                {uploading ? "Dodawanie..." : "Dodaj Post"}
+              </button>
+            </form>
+          )}
+
+          {/* Post Feed */}
+          <div className="space-y-6">
+            {posts.length === 0 ? (
+              <p className="text-center text-gray-400">
+                Brak postów do wyświetlenia.
+              </p>
+            ) : (
+              posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl"
+                >
+                  <h3 className="text-xl font-bold text-orange-500 mb-2">
+                    {post.title}
+                  </h3>
+                  <p className="text-gray-300">{post.content}</p>
+                  {post.imageUrl && (
+                    <img
+                      src={post.imageUrl}
+                      alt="Post"
+                      className="mt-4 w-auto h-auto object-contain rounded-lg mx-auto"
+                      style={{ maxHeight: '300px' }}
+                    />
+                  )}
+                  <p className="text-sm text-gray-500 mt-2">
+                    Opublikowano przez {post.author || "Anonim"} |{" "}
+                    {post.date || "Brak daty"}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
