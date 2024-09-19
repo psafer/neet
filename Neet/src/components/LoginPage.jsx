@@ -29,33 +29,32 @@ const LoginPage = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-  
+
       // Sprawdź, czy użytkownik ma już profil w Firestore
-      const userDocRef = doc(db, 'profiles', user.uid);
+      const userDocRef = doc(db, "profiles", user.uid);
       const userDoc = await getDoc(userDocRef);
-  
+
       // Jeśli profil nie istnieje, zapisz dane użytkownika, w tym zdjęcie z Google
       if (!userDoc.exists()) {
         await setDoc(userDocRef, {
-          firstName: user.displayName.split(' ')[0], // Imię
-          lastName: user.displayName.split(' ')[1] || '', // Nazwisko
+          firstName: user.displayName.split(" ")[0], // Imię
+          lastName: user.displayName.split(" ")[1] || "", // Nazwisko
           email: user.email, // E-mail
           profilePicture: user.photoURL, // Zdjęcie profilowe z Google
-          bio: "Użytkownik Google" // Domyślne bio
+          bio: "Użytkownik Google", // Domyślne bio
         });
       }
-  
+
       // Przekieruj użytkownika po zalogowaniu
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Error logging in with Google:', error);
+      console.error("Error logging in with Google:", error);
       alert(error.message);
     }
   };
-  
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900">
       {/* Logo */}
       <img src="/logo.png" alt="Logo" className="w-32 h-32 mb-3" />
 
