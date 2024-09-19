@@ -10,14 +10,16 @@ const HomePage = () => {
   const [user, setUser] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
   const [newPost, setNewPost] = useState({
-    title: "",
     content: "",
     image: null,
+    imagePreview: null,
   });
   const [uploading, setUploading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const formRef = useRef(null);
+  const inputFileRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,9 +50,7 @@ const HomePage = () => {
       id: doc.id,
     }));
 
-    // Sort posts by date (newest first)
     postsData.sort((a, b) => new Date(b.date) - new Date(a.date));
-
     setPosts(postsData);
   };
 
@@ -61,7 +61,12 @@ const HomePage = () => {
 
   const handleImageChange = (e) => {
     if (e.target.files[0]) {
-      setNewPost((prevPost) => ({ ...prevPost, image: e.target.files[0] }));
+      const file = e.target.files[0];
+      setNewPost((prevPost) => ({
+        ...prevPost,
+        image: file,
+        imagePreview: URL.createObjectURL(file), // Generowanie URL podglądu
+      }));
     }
   };
 
@@ -80,7 +85,6 @@ const HomePage = () => {
 
     try {
       await addDoc(collection(db, "posts"), {
-        title: newPost.title,
         content: newPost.content,
         imageUrl: imageUrl || null,
         author: user.displayName || "Anonim",
@@ -88,14 +92,10 @@ const HomePage = () => {
         userId: user.uid,
       });
 
-      // Reset form state
-      setNewPost({ title: "", content: "", image: null });
+      setNewPost({ content: "", image: null });
       setUploading(false);
       setIsFormOpen(false);
-
-      // Fetch posts again to refresh the list
       fetchPosts();
-
       alert("Post został dodany!");
     } catch (error) {
       console.error("Błąd podczas dodawania postu:", error);
@@ -120,6 +120,9 @@ const HomePage = () => {
     if (menuRef.current && !menuRef.current.contains(e.target)) {
       setIsMenuOpen(false);
     }
+    if (formRef.current && !formRef.current.contains(e.target)) {
+      setIsFormOpen(false); // Zwijanie formularza
+    }
   };
 
   useEffect(() => {
@@ -131,7 +134,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      {/* Header */}
       <header className="bg-gray-800 p-4 shadow-md flex justify-between items-center w-full">
         <div className="flex items-center">
           <img
@@ -184,67 +186,62 @@ const HomePage = () => {
         )}
       </header>
 
-      {/* Main Content Wrapper */}
-      <div className="flex flex-1">
-        {/* Left Sidebar */}
-        <aside className="w-1/7 bg-gray-1000 p-4 mt-1">
-          {user && (
-            <div className="mb-6">
-              <button
-                onClick={() => setIsFormOpen(!isFormOpen)}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-2 rounded w-4/7"
-              >
-                {isFormOpen ? "Zamknij formularz" : "Dodaj Post"}
-              </button>
-            </div>
-          )}
-        </aside>
-
-        {/* Main Content */}
+      <div className="flex flex-1 justify-center items-start">
         <main className="w-5/6 p-4">
-          {/* Post Form */}
-          {isFormOpen && user && (
-            <form
-              onSubmit={handleSubmit}
+          {user && (
+            <div
               className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl"
+              ref={formRef}
             >
-              <h3 className="text-xl font-bold text-orange-500 mb-4">
-                Dodaj nowy post
-              </h3>
               <input
                 type="text"
-                name="title"
-                placeholder="Tytuł"
-                value={newPost.title}
-                onChange={handleInputChange}
-                className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
-                required
-              />
-              <textarea
                 name="content"
-                placeholder="Treść posta"
+                placeholder="Co słychać? Dodaj nowy post..."
                 value={newPost.content}
                 onChange={handleInputChange}
-                className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
-                required
+                className="w-full p-2 bg-gray-700 text-white rounded mb-2 hover:bg-gray-600"
+                onClick={() => setIsFormOpen(true)} // Open the form on click
+                onFocus={() => setIsFormOpen(true)}
               />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
-              />
-              <button
-                type="submit"
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full"
-                disabled={uploading}
-              >
-                {uploading ? "Dodawanie..." : "Dodaj Post"}
-              </button>
-            </form>
+              {isFormOpen && (
+                <>
+                  <div className="flex items-center">
+                    <a className="mr-2 ml-1 text-orange-300">Dodaj do posta</a>
+                    <button
+                      type="button"
+                      onClick={() => inputFileRef.current.click()} // Kliknięcie na ikonę otworzy okno wyboru plików
+                      className="p-2 bg-gray-700 text-white rounded flex items-center"
+                    >
+                      <i className="fa-solid fa-camera"></i>
+                    </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      ref={inputFileRef}
+                      className="hidden"
+                    />
+                  </div>
+                  {newPost.imagePreview && ( // Wyświetlenie podglądu
+                    <img
+                      src={newPost.imagePreview}
+                      alt="Podgląd"
+                      className="mt-2 w-full h-auto object-cover rounded"
+                      style={{ maxHeight: "200px" }} // Ustal maksymalną wysokość
+                    />
+                  )}
+                  <button
+                    onClick={handleSubmit}
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full mt-2"
+                    disabled={uploading}
+                  >
+                    {uploading ? "Dodawanie..." : "Dodaj Post"}
+                  </button>
+                </>
+              )}
+            </div>
           )}
 
-          {/* Post Feed */}
           <div className="space-y-6">
             {posts.length === 0 ? (
               <p className="text-center text-gray-400">
@@ -256,6 +253,18 @@ const HomePage = () => {
                   key={post.id}
                   className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl"
                 >
+                  <div className="flex items-center mb-4">
+                    {profilePicture && (
+                      <img
+                        src={profilePicture}
+                        alt="Autor"
+                        className="w-10 h-10 rounded-full mr-2"
+                      />
+                    )}
+                    <p className="text-lg font-bold text-white">
+                      {post.author || "Anonim"}
+                    </p>
+                  </div>
                   <h3 className="text-xl font-bold text-orange-500 mb-2">
                     {post.title}
                   </h3>
@@ -268,18 +277,8 @@ const HomePage = () => {
                       style={{ maxHeight: "300px" }}
                     />
                   )}
-                  <div className="flex items-center mt-2">
-                    {profilePicture && (
-                      <img
-                        src={profilePicture}
-                        alt="Autor"
-                        className="w-8 h-8 rounded-full mr-2"
-                      />
-                    )}
-                    <p className="text-sm text-gray-500">
-                      Opublikowano przez {post.author || "Anonim"} |{" "}
-                      {post.date || "Brak daty"}
-                    </p>
+                  <div className="mt-2 text-sm text-gray-500">
+                    Opublikowano {post.date || "Brak daty"}
                   </div>
                 </div>
               ))
