@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db, auth, storage } from "../firebaseConfig";
 import { collection, getDocs, doc, getDoc, addDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -9,26 +9,18 @@ const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [user, setUser] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
-  const [newPost, setNewPost] = useState({ title: "", content: "", image: null });
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    image: null,
+  });
   const [uploading, setUploading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const postsCollection = collection(db, "posts");
-      const postsSnapshot = await getDocs(postsCollection);
-      const postsData = postsSnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      
-      // Sort posts by date (newest first)
-      postsData.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      setPosts(postsData);
-    };
-
     fetchPosts();
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -47,6 +39,20 @@ const HomePage = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const fetchPosts = async () => {
+    const postsCollection = collection(db, "posts");
+    const postsSnapshot = await getDocs(postsCollection);
+    const postsData = postsSnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
+
+    // Sort posts by date (newest first)
+    postsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    setPosts(postsData);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -82,9 +88,14 @@ const HomePage = () => {
         userId: user.uid,
       });
 
+      // Reset form state
       setNewPost({ title: "", content: "", image: null });
       setUploading(false);
       setIsFormOpen(false);
+
+      // Fetch posts again to refresh the list
+      fetchPosts();
+
       alert("Post został dodany!");
     } catch (error) {
       console.error("Błąd podczas dodawania postu:", error);
@@ -101,10 +112,27 @@ const HomePage = () => {
     }
   };
 
+  const handleProfileClick = () => {
+    setIsMenuOpen((prev) => !prev);
+  };
+
+  const handleClickOutside = (e) => {
+    if (menuRef.current && !menuRef.current.contains(e.target)) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       {/* Header */}
-      <header className="bg-gray-900 p-4 shadow-md flex justify-between items-center w-full">
+      <header className="bg-gray-800 p-4 shadow-md flex justify-between items-center w-full">
         <div className="flex items-center">
           <img
             src="/logo.png"
@@ -114,28 +142,44 @@ const HomePage = () => {
           <span className="text-gray-400 text-2xl font-bold">Home Page</span>
         </div>
         {user && (
-          <div className="flex items-center">
+          <div className="relative flex items-center">
+            <i
+              className="fas fa-angle-right p-3 ml-2 cursor-pointer"
+              title="Kliknij miniaturkę"
+              onClick={handleProfileClick}
+            ></i>
             {profilePicture ? (
               <img
                 src={profilePicture}
                 alt="Profile"
                 className="w-10 h-10 rounded-full cursor-pointer"
-                onClick={() => navigate("/profile")}
+                onClick={handleProfileClick}
               />
             ) : (
               <div
                 className="w-10 h-10 bg-gray-600 rounded-full cursor-pointer"
-                onClick={() => navigate("/profile")}
+                onClick={handleProfileClick}
               />
             )}
-            <div className="ml-4">
-              <button
-                onClick={handleSignOut}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            {isMenuOpen && (
+              <div
+                ref={menuRef}
+                className="absolute right-0 mt-2 bg-gray-800 rounded shadow-lg"
               >
-                Wyloguj
-              </button>
-            </div>
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="block px-4 py-2 text-white hover:bg-gray-700"
+                >
+                  Profil
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="block px-4 py-2 text-white hover:bg-gray-700"
+                >
+                  Wyloguj
+                </button>
+              </div>
+            )}
           </div>
         )}
       </header>
@@ -143,7 +187,7 @@ const HomePage = () => {
       {/* Main Content Wrapper */}
       <div className="flex flex-1">
         {/* Left Sidebar */}
-        <aside className="w-1/6 bg-gray-900 p-4">
+        <aside className="w-1/7 bg-gray-1000 p-4 mt-1">
           {user && (
             <div className="mb-6">
               <button
@@ -221,13 +265,22 @@ const HomePage = () => {
                       src={post.imageUrl}
                       alt="Post"
                       className="mt-4 w-auto h-auto object-contain rounded-lg mx-auto"
-                      style={{ maxHeight: '300px' }}
+                      style={{ maxHeight: "300px" }}
                     />
                   )}
-                  <p className="text-sm text-gray-500 mt-2">
-                    Opublikowano przez {post.author || "Anonim"} |{" "}
-                    {post.date || "Brak daty"}
-                  </p>
+                  <div className="flex items-center mt-2">
+                    {profilePicture && (
+                      <img
+                        src={profilePicture}
+                        alt="Autor"
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    )}
+                    <p className="text-sm text-gray-500">
+                      Opublikowano przez {post.author || "Anonim"} |{" "}
+                      {post.date || "Brak daty"}
+                    </p>
+                  </div>
                 </div>
               ))
             )}
