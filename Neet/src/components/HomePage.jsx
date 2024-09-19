@@ -90,6 +90,7 @@ const HomePage = () => {
         author: user.displayName || "Anonim",
         date: new Date().toLocaleString(),
         userId: user.uid,
+        profilePicture: profilePicture || null,
       });
 
       setNewPost({ content: "", image: null });
@@ -254,9 +255,9 @@ const HomePage = () => {
                   className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl"
                 >
                   <div className="flex items-center mb-4">
-                    {profilePicture && (
+                    {post.profilePicture && (
                       <img
-                        src={profilePicture}
+                        src={post.profilePicture}
                         alt="Autor"
                         className="w-10 h-10 rounded-full mr-2"
                       />
