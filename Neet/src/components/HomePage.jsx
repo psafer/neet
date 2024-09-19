@@ -192,7 +192,7 @@ const HomePage = () => {
             <div className="mb-6">
               <button
                 onClick={() => setIsFormOpen(!isFormOpen)}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-2 rounded w-4/7"
               >
                 {isFormOpen ? "Zamknij formularz" : "Dodaj Post"}
               </button>
