@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { db, auth } from "../firebaseConfig";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate} from "react-router-dom";
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
