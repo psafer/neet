@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { AuthProvider } from './contexts/AuthContext';
+import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,6 +8,9 @@ import {
 } from "react-router-dom";
 import HomePage from "./components/HomePage";
 import LoginPage from "./components/LoginPage";
+import RegisterPage from "./components/RegisterPage";
+import CreateProfilePage from "./components/CreateProfilePage";
+import ProfilePage from './components/ProfilePage';
 import { auth } from "./firebaseConfig"; // Import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -22,6 +26,7 @@ function App() {
   }, []);
 
   return (
+    <AuthProvider>
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -29,8 +34,12 @@ function App() {
           path="/"
           element={user ? <HomePage /> : <Navigate to="/login" replace />}
         />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/createProfilePage" element={<CreateProfilePage/>}/>
+        <Route path='/profile' element={<ProfilePage/>}/>
       </Routes>
     </Router>
+    </AuthProvider>
   );
 }
 
