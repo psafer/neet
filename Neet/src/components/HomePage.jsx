@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   addDoc,
+  updateDoc,
   query,
   orderBy,
   serverTimestamp,
@@ -13,7 +14,7 @@ import {
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { format } from "date-fns"; // Opcjonalnie, jeśli używasz date-fns
+import { format } from "date-fns";
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -27,6 +28,9 @@ const HomePage = () => {
   const [uploading, setUploading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [newComment, setNewComment] = useState({});
+  const [showCommentInput, setShowCommentInput] = useState({});
+  const [expandedComments, setExpandedComments] = useState({});
   const menuRef = useRef(null);
   const formRef = useRef(null);
   const inputFileRef = useRef(null);
@@ -55,7 +59,7 @@ const HomePage = () => {
   const fetchPosts = async () => {
     try {
       const postsCollection = collection(db, "posts");
-      const q = query(postsCollection, orderBy("date", "desc")); // Sortowanie malejąco
+      const q = query(postsCollection, orderBy("date", "desc"));
       const postsSnapshot = await getDocs(q);
       const postsData = postsSnapshot.docs.map((doc) => ({
         ...doc.data(),
@@ -79,7 +83,7 @@ const HomePage = () => {
       setNewPost((prevPost) => ({
         ...prevPost,
         image: file,
-        imagePreview: URL.createObjectURL(file), // Generowanie URL podglądu
+        imagePreview: URL.createObjectURL(file),
       }));
     }
   };
@@ -102,9 +106,11 @@ const HomePage = () => {
         content: newPost.content,
         imageUrl: imageUrl || null,
         author: user.displayName || "Anonim",
-        date: serverTimestamp(), // Użycie serverTimestamp
+        date: serverTimestamp(),
         userId: user.uid,
         profilePicture: profilePicture || null,
+        likes: [],
+        comments: [],
       });
 
       setNewPost({ content: "", image: null, imagePreview: null });
@@ -115,6 +121,63 @@ const HomePage = () => {
     } catch (error) {
       console.error("Błąd podczas dodawania postu:", error);
       setUploading(false);
+    }
+  };
+
+  const handleLike = async (postId) => {
+    if (!user) return;
+
+    const postRef = doc(db, "posts", postId);
+    const postSnapshot = await getDoc(postRef);
+
+    if (postSnapshot.exists()) {
+      const postData = postSnapshot.data();
+      const hasLiked = postData.likes.includes(user.uid);
+
+      if (!hasLiked) {
+        await updateDoc(postRef, {
+          likes: [...postData.likes, user.uid],
+        });
+      } else {
+        await updateDoc(postRef, {
+          likes: postData.likes.filter((id) => id !== user.uid),
+        });
+      }
+      fetchPosts();
+    }
+  };
+
+  const handleCommentChange = (postId, e) => {
+    setNewComment((prev) => ({ ...prev, [postId]: e.target.value }));
+  };
+
+  const handleAddComment = async (postId) => {
+    if (!newComment[postId] || newComment[postId].trim() === "") return;
+
+    const postRef = doc(db, "posts", postId);
+    const postSnapshot = await getDoc(postRef);
+
+    if (postSnapshot.exists()) {
+      const postData = postSnapshot.data();
+      const newCommentData = {
+        content: newComment[postId],
+        author: user.displayName || "Anonim",
+        date: new Date(),
+      };
+
+      await updateDoc(postRef, {
+        comments: [...postData.comments, newCommentData],
+      });
+
+      setNewComment((prev) => ({ ...prev, [postId]: "" }));
+      fetchPosts();
+    }
+  };
+
+  const handleKeyDown = (postId, e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddComment(postId);
     }
   };
 
@@ -136,7 +199,7 @@ const HomePage = () => {
       setIsMenuOpen(false);
     }
     if (formRef.current && !formRef.current.contains(e.target)) {
-      setIsFormOpen(false); // Zwijanie formularza
+      setIsFormOpen(false);
     }
   };
 
@@ -147,22 +210,23 @@ const HomePage = () => {
     };
   }, []);
 
+  const toggleExpandComments = (postId) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <header className="bg-gray-800 p-4 shadow-md flex justify-between items-center w-full relative">
-        {/* Lewa strona: Logo */}
         <div className="flex items-center">
           <img src="/logo.png" alt="Logo" className="w-16 h-16 rounded-full" />
         </div>
-
-        {/* Środek: napis.png */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
           <img src="/napis.png" alt="Home Page" className="h-10" />
-          <p className="text-sm text-gray-400 mt-1">HomePage</p>{" "}
-          {/* Dodanie mini napisu */}
+          <p className="text-sm text-gray-400 mt-1">HomePage</p>
         </div>
-
-        {/* Prawa strona: Profil użytkownika i menu */}
         {user && (
           <div className="flex items-center">
             <img
@@ -208,7 +272,7 @@ const HomePage = () => {
                 value={newPost.content}
                 onChange={handleInputChange}
                 className="w-full p-2 bg-gray-700 text-white rounded mb-2 hover:bg-gray-600"
-                onClick={() => setIsFormOpen(true)} // Open the form on click
+                onClick={() => setIsFormOpen(true)}
                 onFocus={() => setIsFormOpen(true)}
               />
               {isFormOpen && (
@@ -219,7 +283,7 @@ const HomePage = () => {
                     </span>
                     <button
                       type="button"
-                      onClick={() => inputFileRef.current.click()} // Kliknięcie na ikonę otworzy okno wyboru plików
+                      onClick={() => inputFileRef.current.click()}
                       className="p-2 bg-gray-700 text-white rounded flex items-center"
                     >
                       <i className="fa-solid fa-camera"></i>
@@ -232,7 +296,7 @@ const HomePage = () => {
                       className="hidden"
                     />
                   </div>
-                  {newPost.imagePreview && ( // Wyświetlenie podglądu
+                  {newPost.imagePreview && (
                     <img
                       src={newPost.imagePreview}
                       alt="Podgląd"
@@ -261,7 +325,7 @@ const HomePage = () => {
               posts.map((post) => (
                 <div
                   key={post.id}
-                  className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl"
+                  className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl border border-gray-600"
                 >
                   <div className="flex items-center mb-4">
                     {post.profilePicture && (
@@ -275,23 +339,109 @@ const HomePage = () => {
                       {post.author || "Anonim"}
                     </p>
                   </div>
-                  <h3 className="text-xl font-bold text-orange-500 mb-2">
-                    {post.title}
-                  </h3>
-                  <p className="text-gray-300">{post.content}</p>
-                  {post.imageUrl && (
-                    <img
-                      src={post.imageUrl}
-                      alt="Post"
-                      className="mt-4 w-auto h-auto object-contain rounded-lg mx-auto"
-                      style={{ maxHeight: "300px" }}
-                    />
-                  )}
-                  <div className="mt-2 text-sm text-gray-500">
-                    Opublikowano:{" "}
-                    {post.date
-                      ? format(post.date.toDate(), "dd.MM.yyyy, HH:mm")
-                      : "Brak daty"}
+                  <div className="p-4 border border-gray-600 rounded-lg">
+                    <h3 className="text-xl font-bold text-orange-500 mb-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-gray-300">{post.content}</p>
+                    {post.imageUrl && (
+                      <img
+                        src={post.imageUrl}
+                        alt="Post"
+                        className="mt-4 w-auto h-auto object-contain rounded-lg mx-auto"
+                        style={{ maxHeight: "300px" }}
+                      />
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        className={`flex items-center text-sm ${
+                          post.likes.includes(user?.uid)
+                            ? "text-red-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        <i
+                          className={`fa-solid fa-heart mr-1 ${
+                            post.likes.includes(user?.uid)
+                              ? "text-red-500"
+                              : "text-gray-500"
+                          }`}
+                        ></i>
+                        {post.likes.length}
+                      </button>
+                      <div className="mt-2 text-sm text-gray-500">
+                        Opublikowano:{" "}
+                        {post.date
+                          ? format(post.date.toDate(), "dd.MM.yyyy, HH:mm")
+                          : "Brak daty"}
+                      </div>
+                      <button
+                        onClick={() =>
+                          setShowCommentInput((prev) => ({
+                            ...prev,
+                            [post.id]: !prev[post.id],
+                          }))
+                        }
+                        className="text-gray-400 hover:text-orange-500"
+                      >
+                        <i className="fa-solid fa-comment"></i>
+                      </button>
+                    </div>
+                    {showCommentInput[post.id] && (
+                      <div className="mt-2 flex">
+                        <input
+                          type="text"
+                          placeholder="Twój komentarz..."
+                          value={newComment[post.id] || ""}
+                          onChange={(e) => handleCommentChange(post.id, e)}
+                          onKeyDown={(e) => handleKeyDown(post.id, e)} // Dodaj obsługę Enter
+                          className="flex-grow p-2 bg-gray-700 text-white rounded"
+                        />
+                        <button
+                          onClick={() => handleAddComment(post.id)}
+                          className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2"
+                        >
+                          <i className="fa-solid fa-paper-plane"></i>
+                        </button>
+                      </div>
+                    )}
+                    {/* Sekcja do wyświetlania komentarzy */}
+                    {post.comments.length > 0 && (
+                      <div className="mt-4 border-t border-gray-600 pt-2">
+                        {post.comments
+                          .slice()
+                          .reverse() // Odwróć tablicę komentarzy
+                          .slice(
+                            0,
+                            expandedComments[post.id] ? post.comments.length : 3
+                          )
+                          .map((comment, index) => (
+                            <div key={index} className="text-gray-300 mb-2">
+                              <strong>{comment.author}:</strong>{" "}
+                              {comment.content}{" "}
+                              <span className="text-gray-500 text-sm">
+                                {comment.date
+                                  ? format(
+                                      comment.date.toDate(),
+                                      "dd.MM.yyyy, HH:mm"
+                                    )
+                                  : ""}
+                              </span>
+                            </div>
+                          ))}
+                        {post.comments.length > 3 && (
+                          <button
+                            onClick={() => toggleExpandComments(post.id)}
+                            className="text-orange-500"
+                          >
+                            {expandedComments[post.id]
+                              ? "Zwiń komentarze"
+                              : "Pokaż więcej komentarzy"}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
