@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { db, auth } from "../firebaseConfig";
-import { collection, doc, getDoc, query, orderBy, onSnapshot, writeBatch } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  writeBatch,
+} from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom"; // Import Link
-import { BellIcon } from '@heroicons/react/24/outline';
+import { BellIcon } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
 
 const HomePageHeader = () => {
@@ -27,7 +35,12 @@ const HomePageHeader = () => {
           setProfilePicture(docSnap.data().profilePicture);
         }
 
-        const notificationsRef = collection(db, "notifications", currentUser.uid, "userNotifications");
+        const notificationsRef = collection(
+          db,
+          "notifications",
+          currentUser.uid,
+          "userNotifications"
+        );
         const q = query(notificationsRef, orderBy("date", "desc"));
         const unsubscribeNotifications = onSnapshot(q, (snapshot) => {
           const notificationsData = snapshot.docs.map((doc) => ({
@@ -35,7 +48,9 @@ const HomePageHeader = () => {
             id: doc.id,
           }));
           setNotifications(notificationsData);
-          const unread = notificationsData.filter((notif) => !notif.read).length;
+          const unread = notificationsData.filter(
+            (notif) => !notif.read
+          ).length;
           setUnreadCount(unread);
         });
 
@@ -63,7 +78,13 @@ const HomePageHeader = () => {
     try {
       const batch = writeBatch(db);
       notifications.forEach((notif) => {
-        const notifRef = doc(db, "notifications", user.uid, "userNotifications", notif.id);
+        const notifRef = doc(
+          db,
+          "notifications",
+          user.uid,
+          "userNotifications",
+          notif.id
+        );
         batch.delete(notifRef);
       });
       await batch.commit();
@@ -77,8 +98,14 @@ const HomePageHeader = () => {
   return (
     <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
       <div className="flex items-center">
-        <Link to="/"> {/* Link to the homepage */}
-          <img src="/mini.png" alt="Logo" className="w-auto h-14 rounded-full cursor-pointer" />
+        <Link to="/">
+          {" "}
+          {/* Link to the homepage */}
+          <img
+            src="/mini.png"
+            alt="Logo"
+            className="w-auto h-14 rounded-full cursor-pointer"
+          />
         </Link>
       </div>
       <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
@@ -89,7 +116,9 @@ const HomePageHeader = () => {
         <div className="flex items-center">
           <div className="relative mr-4">
             <BellIcon
-              className={`w-8 h-8 text-gray-400 cursor-pointer ${unreadCount > 0 ? 'bell-shake' : ''}`}
+              className={`w-8 h-8 text-gray-400 cursor-pointer ${
+                unreadCount > 0 ? "bell-shake" : ""
+              }`}
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             />
             {unreadCount > 0 && (
@@ -101,7 +130,10 @@ const HomePageHeader = () => {
               <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-lg font-bold">Powiadomienia</h3>
-                  <button className="text-orange-500" onClick={deleteNotifications}>
+                  <button
+                    className="text-orange-500"
+                    onClick={deleteNotifications}
+                  >
                     <i className="fa-solid fa-broom"></i>
                   </button>
                 </div>
@@ -112,7 +144,9 @@ const HomePageHeader = () => {
                     <div key={index} className="border-b border-gray-600 py-2">
                       <p>{notif.message}</p>
                       <span className="text-gray-500 text-sm">
-                        {notif.date ? format(notif.date.toDate(), "dd.MM.yyyy, HH:mm") : "Brak daty"}
+                        {notif.date
+                          ? format(notif.date.toDate(), "dd.MM.yyyy, HH:mm")
+                          : "Brak daty"}
                       </span>
                     </div>
                   ))
@@ -131,13 +165,22 @@ const HomePageHeader = () => {
               ref={menuRef}
               className="absolute top-full right-0 mt-2 bg-gray-800 rounded shadow-lg z-50 transition ease-out duration-200"
             >
-              <button onClick={() => navigate(`/profile/${user.uid}`)} className="block px-4 py-2 text-white hover:bg-gray-700">
+              <button
+                onClick={() => navigate(`/profile/${user.uid}`)}
+                className="block px-4 py-2 text-white hover:bg-gray-700"
+              >
                 Moje Posty
               </button>
-              <button onClick={() => navigate("/profile")} className="block px-4 py-2 text-white hover:bg-gray-700">
+              <button
+                onClick={() => navigate("/profile")}
+                className="block px-4 py-2 text-white hover:bg-gray-700"
+              >
                 Profil
               </button>
-              <button onClick={handleSignOut} className="block px-4 py-2 text-white hover:bg-gray-700">
+              <button
+                onClick={handleSignOut}
+                className="block px-4 py-2 text-white hover:bg-gray-700"
+              >
                 Wyloguj
               </button>
             </div>
