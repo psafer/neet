@@ -106,16 +106,30 @@ const HomePage = () => {
     return () => unsubscribe();
   }, [unreadCount]);
 
-  // **Funkcja do pobierania postów z Firestore**
+  // **Funkcja do pobierania postów z Firestore wraz z komentarzami**
   const fetchPosts = async () => {
     try {
       const postsCollection = collection(db, "posts");
       const q = query(postsCollection, orderBy("date", "desc"));
       const postsSnapshot = await getDocs(q);
-      const postsData = postsSnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
+      const postsData = await Promise.all(
+        postsSnapshot.docs.map(async (doc) => {
+          const postData = doc.data();
+          const commentsRef = collection(db, "posts", doc.id, "comments");
+          const commentsSnapshot = await getDocs(
+            query(commentsRef, orderBy("date", "asc"))
+          );
+          const commentsData = commentsSnapshot.docs.map((commentDoc) => ({
+            ...commentDoc.data(),
+            id: commentDoc.id,
+          }));
+          return {
+            ...postData,
+            id: doc.id,
+            comments: commentsData,
+          };
+        })
+      );
 
       setPosts(postsData);
     } catch (error) {
@@ -187,7 +201,7 @@ const HomePage = () => {
       }
 
       // **Dodawanie nowego posta do Firestore**
-      await addDoc(collection(db, "posts"), {
+      const newPostRef = await addDoc(collection(db, "posts"), {
         content: newPost.content,
         imageUrl: imageUrl || null,
         author: authorName,
@@ -195,7 +209,6 @@ const HomePage = () => {
         userId: user.uid,
         profilePicture: profilePicture || null,
         likes: [],
-        comments: [],
       });
 
       // **Aktualizacja stanu użytkownika po dodaniu posta**
@@ -280,12 +293,9 @@ const HomePage = () => {
   const handleAddComment = async (postId) => {
     if (!newComment[postId] || newComment[postId].trim() === "") return;
 
-    const postRef = doc(db, "posts", postId);
-    const postSnapshot = await getDoc(postRef);
+    const commentsRef = collection(db, "posts", postId, "comments");
 
-    if (postSnapshot.exists()) {
-      const postData = postSnapshot.data();
-
+    try {
       // **Pobieranie danych profilu komentującego użytkownika**
       const docRef = doc(db, "profiles", user.uid);
       const docSnap = await getDoc(docRef);
@@ -300,33 +310,38 @@ const HomePage = () => {
       const newCommentData = {
         content: newComment[postId],
         author: authorName,
-        date: serverTimestamp(), // **Użycie serverTimestamp dla jednolitości czasu**
+        date: serverTimestamp(), // **Użycie serverTimestamp**
       };
 
-      // **Aktualizacja listy komentarzy w poście**
-      await updateDoc(postRef, {
-        comments: [...postData.comments, newCommentData],
-      });
+      // **Dodanie nowego komentarza do subkolekcji**
+      await addDoc(commentsRef, newCommentData);
 
       // **Wysyłanie powiadomienia do autora posta, jeśli komentujący nie jest autorem**
-      if (postData.userId !== user.uid) {
-        const notificationRef = collection(
-          db,
-          "notifications",
-          postData.userId,
-          "userNotifications"
-        );
-        await addDoc(notificationRef, {
-          message: `${authorName} skomentował Twój post`,
-          postId,
-          date: serverTimestamp(),
-          read: false,
-        });
+      const postRef = doc(db, "posts", postId);
+      const postSnapshot = await getDoc(postRef);
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+        if (postData.userId !== user.uid) {
+          const notificationRef = collection(
+            db,
+            "notifications",
+            postData.userId,
+            "userNotifications"
+          );
+          await addDoc(notificationRef, {
+            message: `${authorName} skomentował Twój post`,
+            postId,
+            date: serverTimestamp(),
+            read: false,
+          });
+        }
       }
 
       // **Resetowanie pola komentarza po dodaniu**
       setNewComment((prev) => ({ ...prev, [postId]: "" }));
       fetchPosts();
+    } catch (error) {
+      console.error("Błąd podczas dodawania komentarza:", error);
     }
   };
 
@@ -577,8 +592,11 @@ const HomePage = () => {
                             0,
                             expandedComments[post.id] ? post.comments.length : 3
                           )
-                          .map((comment, index) => (
-                            <div key={index} className="text-gray-300 mb-2">
+                          .map((comment) => (
+                            <div
+                              key={comment.id}
+                              className="text-gray-300 mb-2"
+                            >
                               <strong>{comment.author}:</strong>{" "}
                               {comment.content}{" "}
                               <span className="text-gray-500 text-sm">
