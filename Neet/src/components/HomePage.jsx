@@ -11,14 +11,14 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
-  onSnapshot // Import onSnapshot
+  onSnapshot
 } from "firebase/firestore";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate, Link } from "react-router-dom";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { format } from "date-fns";
-import { BellIcon } from '@heroicons/react/24/outline';
-import EmojiPicker from 'emoji-picker-react'; // Import Picker
+import EmojiPicker from 'emoji-picker-react';
+import HomePageHeader from './HomePageHeader'; // Importuj HomePageHeader
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -39,7 +39,6 @@ const HomePage = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
 
   const menuRef = useRef(null);
   const formRef = useRef(null);
@@ -261,133 +260,9 @@ const HomePage = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate("/login");
-    } catch (error) {
-      console.error("Błąd podczas wylogowywania:", error);
-    }
-  };
-
-  const handleProfileClick = () => {
-    setIsMenuOpen((prev) => !prev);
-  };
-
-  const handleClickOutside = (e) => {
-    if (menuRef.current && !menuRef.current.contains(e.target)) {
-      setIsMenuOpen(false);
-    }
-    if (formRef.current && !formRef.current.contains(e.target)) {
-      setIsFormOpen(false);
-    }
-    if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
-      setShowEmojiPicker(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const toggleExpandComments = (postId) => {
-    setExpandedComments((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-  };
-
-  const deleteNotifications = async () => {
-    const notificationsRef = collection(db, "notifications", user.uid, "userNotifications");
-
-    const batch = writeBatch(db);
-    notifications.forEach((notif) => {
-      const docRef = doc(notificationsRef, notif.id);
-      batch.delete(docRef);
-    });
-    try {
-      await batch.commit();
-      setNotifications([]);
-      setUnreadCount(0);
-    } catch (error) {
-      console.error("Błąd podczas usuwania powiadomień:", error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
-        <div className="flex items-center">
-          <img src="/mini.png" alt="Logo" className="w-auto h-14 rounded-full" />
-        </div>
-        <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-          <img src="/napis.png" alt="Home Page" className="h-10" />
-          <p className="text-sm text-gray-400 mt-1">HomePage</p>
-        </div>
-        {user && (
-          <div className="flex items-center">
-            <div className="relative mr-4">
-              {/* Dzwonek z animacją */}
-              <BellIcon
-                className={`w-8 h-8 text-gray-400 cursor-pointer ${unreadCount > 0 ? 'bell-shake' : ''}`}
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              />
-              {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
-                  {unreadCount}
-                </span>
-              )}
-              {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-bold">Powiadomienia</h3>
-                    <button onClick={deleteNotifications} className="text-orange-500">
-                      <i className="fa-solid fa-broom"></i>
-                    </button>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <p className="text-gray-400">Brak powiadomień</p>
-                  ) : (
-                    notifications.map((notif, index) => (
-                      <div key={index} className="border-b border-gray-600 py-2">
-                        <p>{notif.message}</p>
-                        <span className="text-gray-500 text-sm">
-                          {/* Sprawdzenie, czy pole 'date' istnieje i wywołanie toDate() tylko wtedy, gdy nie jest null */}
-                          {notif.date ? format(notif.date.toDate(), "dd.MM.yyyy, HH:mm") : "Brak daty"}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-
-            </div>
-            <img
-              src={profilePicture || "/mini.png"}
-              alt="Profile"
-              className="w-10 h-10 rounded-full cursor-pointer"
-              onClick={handleProfileClick}
-            />
-            {isMenuOpen && (
-              <div
-                ref={menuRef}
-                className="absolute top-full right-0 mt-2 bg-gray-800 rounded shadow-lg z-50 transition ease-out duration-200"
-              >
-                <button onClick={() => navigate("/profile")} className="block px-4 py-2 text-white hover:bg-gray-700">
-                  Profil
-                </button>
-                <button onClick={handleSignOut} className="block px-4 py-2 text-white hover:bg-gray-700">
-                  Wyloguj
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </header>
+      <HomePageHeader /> {/* Użycie HomePageHeader tutaj */}
 
       <div className="flex flex-1 justify-center items-start pt-16">
         <main className="w-5/6 p-4">
@@ -473,7 +348,9 @@ const HomePage = () => {
                       />
                     )}
                     <p className="text-lg font-semibold text-white">
-                      {post.author || "Anonim"}
+                      <Link to={`/profile/${post.userId}`}> {/* Link do profilu */}
+                        {post.author || "Anonim"}
+                      </Link>
                     </p>
                   </div>
                   <div className="p-4 border border-gray-600 rounded-lg">

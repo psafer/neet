@@ -11,6 +11,5 @@
   
   .bell-shake {
     animation: shake 0.5s ease-in-out infinite;
-    animation-delay: 3s; /* Animacja co 3 sekundy */
   }
   
