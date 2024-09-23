@@ -31,7 +31,7 @@ const CreateProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900">
       <img src="/logo.png" alt="Logo" className="w-32 h-32 mb-3" />
 
       <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-8">
