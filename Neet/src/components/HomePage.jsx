@@ -10,15 +10,14 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  writeBatch,
-  onSnapshot
+  onSnapshot,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { format } from "date-fns";
 import EmojiPicker from 'emoji-picker-react';
-import HomePageHeader from './HomePageHeader'; // Importuj HomePageHeader
+import HomePageHeader from './HomePageHeader'; // Import HomePageHeader
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -31,20 +30,32 @@ const HomePage = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [newComment, setNewComment] = useState({});
   const [showCommentInput, setShowCommentInput] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
-  const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  const menuRef = useRef(null);
   const formRef = useRef(null);
   const inputFileRef = useRef(null);
   const emojiPickerRef = useRef(null);
-  const navigate = useNavigate();
+
+  // Close the form when clicking outside
+  const handleClickOutside = (e) => {
+    if (formRef.current && !formRef.current.contains(e.target)) {
+      setIsFormOpen(false);
+    }
+    if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+      setShowEmojiPicker(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     fetchPosts();
@@ -62,14 +73,13 @@ const HomePage = () => {
         // Realtime update for notifications
         const notificationsRef = collection(db, "notifications", currentUser.uid, "userNotifications");
         const q = query(notificationsRef, orderBy("date", "desc"));
-        
+
         // Listen to changes in real-time
         const unsubscribeNotifications = onSnapshot(q, (snapshot) => {
           const notificationsData = snapshot.docs.map((doc) => ({
             ...doc.data(),
             id: doc.id,
           }));
-          setNotifications(notificationsData);
           const unread = notificationsData.filter((notif) => !notif.read).length;
           setUnreadCount(unread);
         });
@@ -95,7 +105,7 @@ const HomePage = () => {
 
       setPosts(postsData);
     } catch (error) {
-      console.error("Błąd podczas pobierania postów:", error);
+      console.error("Error fetching posts:", error);
     }
   };
 
@@ -161,9 +171,9 @@ const HomePage = () => {
       setUploading(false);
       setIsFormOpen(false);
       fetchPosts();
-      alert("Post został dodany!");
+      alert("Post added successfully!");
     } catch (error) {
-      console.error("Błąd podczas dodawania postu:", error);
+      console.error("Error adding post:", error);
       setUploading(false);
     }
   };
@@ -186,7 +196,7 @@ const HomePage = () => {
         const userProfileRef = doc(db, "profiles", user.uid);
         const userProfileSnap = await getDoc(userProfileRef);
         
-        let userFullName = "Ktoś";
+        let userFullName = "Someone";
         if (userProfileSnap.exists()) {
           const profileData = userProfileSnap.data();
           userFullName = `${profileData.firstName} ${profileData.lastName}`;
@@ -194,7 +204,7 @@ const HomePage = () => {
 
         const notificationRef = collection(db, "notifications", postData.userId, "userNotifications");
         await addDoc(notificationRef, {
-          message: `${userFullName} polubił Twój post`,
+          message: `${userFullName} liked your post`,
           postId,
           date: serverTimestamp(),
           read: false,
@@ -240,13 +250,16 @@ const HomePage = () => {
         comments: [...postData.comments, newCommentData],
       });
 
-      const notificationRef = collection(db, "notifications", postData.userId, "userNotifications");
-      await addDoc(notificationRef, {
-        message: `${authorName} skomentował Twój post`,
-        postId,
-        date: serverTimestamp(),
-        read: false,
-      });
+      // Send notification to the post author, if the commenter is not the post's author
+      if (postData.userId !== user.uid) {
+        const notificationRef = collection(db, "notifications", postData.userId, "userNotifications");
+        await addDoc(notificationRef, {
+          message: `${authorName} commented on your post`,
+          postId,
+          date: serverTimestamp(),
+          read: false,
+        });
+      }
 
       setNewComment((prev) => ({ ...prev, [postId]: "" }));
       fetchPosts();
@@ -260,9 +273,16 @@ const HomePage = () => {
     }
   };
 
+  const toggleExpandComments = (postId) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <HomePageHeader /> {/* Użycie HomePageHeader tutaj */}
+      <HomePageHeader /> {/* Use HomePageHeader */}
 
       <div className="flex flex-1 justify-center items-start pt-16">
         <main className="w-5/6 p-4">
@@ -271,7 +291,7 @@ const HomePage = () => {
               <input
                 type="text"
                 name="content"
-                placeholder="Co słychać? Dodaj nowy post..." 
+                placeholder="What's happening? Add a new post..." 
                 value={newPost.content}
                 onChange={handleInputChange}
                 className="w-full p-2 bg-gray-700 text-white rounded mb-2 hover:bg-gray-600"
@@ -281,7 +301,7 @@ const HomePage = () => {
               {isFormOpen && (
                 <>
                   <div className="flex items-center">
-                    <span className="mr-2 ml-1 text-orange-300">Dodaj do posta</span>
+                    <span className="mr-2 ml-1 text-orange-300">Add to post</span>
                     <button
                       type="button"
                       onClick={() => inputFileRef.current.click()}
@@ -313,7 +333,7 @@ const HomePage = () => {
                   {newPost.imagePreview && (
                     <img
                       src={newPost.imagePreview}
-                      alt="Podgląd"
+                      alt="Preview"
                       className="mt-2 w-full h-auto object-cover rounded"
                       style={{ maxHeight: "200px", opacity: 0.4 }}
                     />
@@ -323,7 +343,7 @@ const HomePage = () => {
                     className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full mt-2"
                     disabled={uploading}
                   >
-                    {uploading ? "Dodawanie..." : "Dodaj Post"}
+                    {uploading ? "Uploading..." : "Add Post"}
                   </button>
                 </>
               )}
@@ -332,7 +352,7 @@ const HomePage = () => {
 
           <div className="space-y-6">
             {posts.length === 0 ? (
-              <p className="text-center text-gray-400">Brak postów do wyświetlenia.</p>
+              <p className="text-center text-gray-400">No posts to display.</p>
             ) : (
               posts.map((post) => (
                 <div
@@ -343,12 +363,12 @@ const HomePage = () => {
                     {post.profilePicture && (
                       <img
                         src={post.profilePicture}
-                        alt="Autor"
+                        alt="Author"
                         className="w-9 h-9 rounded-full mr-2 mb-2"
                       />
                     )}
                     <p className="text-lg font-semibold text-white">
-                      <Link to={`/profile/${post.userId}`}> {/* Link do profilu */}
+                      <Link to={`/profile/${post.userId}`}> {/* Link to profile */}
                         {post.author || "Anonim"}
                       </Link>
                     </p>
@@ -385,10 +405,10 @@ const HomePage = () => {
                         {post.likes.length}
                       </button>
                       <div className="mt-2 text-sm text-gray-500">
-                        Opublikowano:{" "}
+                        Posted:{" "}
                         {post.date
                           ? format(post.date.toDate(), "dd.MM.yyyy, HH:mm")
-                          : "Brak daty"}
+                          : "No date"}
                       </div>
                       <button
                         onClick={() =>
@@ -406,7 +426,7 @@ const HomePage = () => {
                       <div className="mt-2 flex">
                         <input
                           type="text"
-                          placeholder="Twój komentarz..."
+                          placeholder="Your comment..."
                           value={newComment[post.id] || ""}
                           onChange={(e) => handleCommentChange(post.id, e)}
                           onKeyDown={(e) => handleKeyDown(post.id, e)}
@@ -449,8 +469,8 @@ const HomePage = () => {
                             className="text-orange-500"
                           >
                             {expandedComments[post.id]
-                              ? "Zwiń komentarze"
-                              : "Pokaż więcej komentarzy"}
+                              ? "Collapse comments"
+                              : "Show more comments"}
                           </button>
                         )}
                       </div>
