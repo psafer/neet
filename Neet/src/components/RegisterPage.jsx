@@ -20,7 +20,7 @@ const RegisterPage = () => {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/createProfilePage"); // Przekierowanie na stronę logowania po rejestracji
+      navigate("/createProfilePage"); // Przekierowanie na stronę tworzenia profilu po rejestracji
     } catch (error) {
       console.error(error);
       setError(error.message);

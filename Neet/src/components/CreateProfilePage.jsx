@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { db } from '../firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
-import { useAuth } from '../contexts/UseAuth';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { db } from "../firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
+import { useAuth } from "../contexts/UseAuth";
+import { useNavigate } from "react-router-dom";
 
 const CreateProfilePage = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState('');
-  const [bio, setBio] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [gender, setGender] = useState("");
+  const [bio, setBio] = useState("");
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -16,17 +16,17 @@ const CreateProfilePage = () => {
     e.preventDefault();
 
     try {
-      await setDoc(doc(db, 'profiles', currentUser.uid), {
+      await setDoc(doc(db, "profiles", currentUser.uid), {
         firstName,
         lastName,
         gender,
         bio,
       });
 
-      navigate('/'); // Navigate to home after profile creation
+      navigate("/"); // Navigate to home after profile creation
     } catch (error) {
-      console.error('Błąd podczas tworzenia profilu:', error);
-      alert('Wystąpił błąd podczas tworzenia profilu.');
+      console.error("Błąd podczas tworzenia profilu:", error);
+      alert("Wystąpił błąd podczas tworzenia profilu.");
     }
   };
 
