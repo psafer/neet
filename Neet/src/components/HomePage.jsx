@@ -10,11 +10,15 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  writeBatch,
+  onSnapshot // Import onSnapshot
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { format } from "date-fns";
+import { BellIcon } from '@heroicons/react/24/outline';
+import EmojiPicker from 'emoji-picker-react'; // Import Picker
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -28,12 +32,19 @@ const HomePage = () => {
   const [uploading, setUploading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [newComment, setNewComment] = useState({});
   const [showCommentInput, setShowCommentInput] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+
   const menuRef = useRef(null);
   const formRef = useRef(null);
   const inputFileRef = useRef(null);
+  const emojiPickerRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,13 +59,30 @@ const HomePage = () => {
           const profileData = docSnap.data();
           setProfilePicture(profileData.profilePicture);
         }
+
+        // Realtime update for notifications
+        const notificationsRef = collection(db, "notifications", currentUser.uid, "userNotifications");
+        const q = query(notificationsRef, orderBy("date", "desc"));
+        
+        // Listen to changes in real-time
+        const unsubscribeNotifications = onSnapshot(q, (snapshot) => {
+          const notificationsData = snapshot.docs.map((doc) => ({
+            ...doc.data(),
+            id: doc.id,
+          }));
+          setNotifications(notificationsData);
+          const unread = notificationsData.filter((notif) => !notif.read).length;
+          setUnreadCount(unread);
+        });
+
+        return () => unsubscribeNotifications();
       } else {
         setUser(null);
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [unreadCount]);
 
   const fetchPosts = async () => {
     try {
@@ -75,6 +103,14 @@ const HomePage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewPost((prevPost) => ({ ...prevPost, [name]: value }));
+  };
+
+  const handleEmojiClick = (emojiData, emojiObject) => {
+    const emoji = emojiObject?.emoji || emojiData?.emoji;
+    setNewPost((prevPost) => ({
+      ...prevPost,
+      content: prevPost.content + emoji,
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -102,11 +138,10 @@ const HomePage = () => {
     }
 
     try {
-      // Pobieranie danych profilu z Firestore
       const docRef = doc(db, "profiles", user.uid);
       const docSnap = await getDoc(docRef);
-      
-      let authorName = "Anonim"; // Domyślnie "Anonim"
+
+      let authorName = "Anonim";
       if (docSnap.exists()) {
         const profileData = docSnap.data();
         authorName = `${profileData.firstName} ${profileData.lastName}`;
@@ -148,6 +183,23 @@ const HomePage = () => {
         await updateDoc(postRef, {
           likes: [...postData.likes, user.uid],
         });
+
+        const userProfileRef = doc(db, "profiles", user.uid);
+        const userProfileSnap = await getDoc(userProfileRef);
+        
+        let userFullName = "Ktoś";
+        if (userProfileSnap.exists()) {
+          const profileData = userProfileSnap.data();
+          userFullName = `${profileData.firstName} ${profileData.lastName}`;
+        }
+
+        const notificationRef = collection(db, "notifications", postData.userId, "userNotifications");
+        await addDoc(notificationRef, {
+          message: `${userFullName} polubił Twój post`,
+          postId,
+          date: serverTimestamp(),
+          read: false,
+        });
       } else {
         await updateDoc(postRef, {
           likes: postData.likes.filter((id) => id !== user.uid),
@@ -169,14 +221,32 @@ const HomePage = () => {
 
     if (postSnapshot.exists()) {
       const postData = postSnapshot.data();
+
+      const docRef = doc(db, "profiles", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      let authorName = "Anonim";
+      if (docSnap.exists()) {
+        const profileData = docSnap.data();
+        authorName = `${profileData.firstName} ${profileData.lastName}`;
+      }
+
       const newCommentData = {
         content: newComment[postId],
-        author: user.displayName || "Anonim",
+        author: authorName,
         date: new Date(),
       };
 
       await updateDoc(postRef, {
         comments: [...postData.comments, newCommentData],
+      });
+
+      const notificationRef = collection(db, "notifications", postData.userId, "userNotifications");
+      await addDoc(notificationRef, {
+        message: `${authorName} skomentował Twój post`,
+        postId,
+        date: serverTimestamp(),
+        read: false,
       });
 
       setNewComment((prev) => ({ ...prev, [postId]: "" }));
@@ -211,6 +281,9 @@ const HomePage = () => {
     if (formRef.current && !formRef.current.contains(e.target)) {
       setIsFormOpen(false);
     }
+    if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+      setShowEmojiPicker(false);
+    }
   };
 
   useEffect(() => {
@@ -227,11 +300,28 @@ const HomePage = () => {
     }));
   };
 
+  const deleteNotifications = async () => {
+    const notificationsRef = collection(db, "notifications", user.uid, "userNotifications");
+
+    const batch = writeBatch(db);
+    notifications.forEach((notif) => {
+      const docRef = doc(notificationsRef, notif.id);
+      batch.delete(docRef);
+    });
+    try {
+      await batch.commit();
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Błąd podczas usuwania powiadomień:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <header className="bg-gray-800 p-4 shadow-md flex justify-between items-center w-full relative">
+      <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
         <div className="flex items-center">
-          <img src="/logo.png" alt="Logo" className="w-16 h-16 rounded-full" />
+          <img src="/mini.png" alt="Logo" className="w-auto h-14 rounded-full" />
         </div>
         <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
           <img src="/napis.png" alt="Home Page" className="h-10" />
@@ -239,8 +329,45 @@ const HomePage = () => {
         </div>
         {user && (
           <div className="flex items-center">
+            <div className="relative mr-4">
+              {/* Dzwonek z animacją */}
+              <BellIcon
+                className={`w-8 h-8 text-gray-400 cursor-pointer ${unreadCount > 0 ? 'bell-shake' : ''}`}
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
+                  {unreadCount}
+                </span>
+              )}
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-bold">Powiadomienia</h3>
+                    <button onClick={deleteNotifications} className="text-orange-500">
+                      <i className="fa-solid fa-broom"></i>
+                    </button>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <p className="text-gray-400">Brak powiadomień</p>
+                  ) : (
+                    notifications.map((notif, index) => (
+                      <div key={index} className="border-b border-gray-600 py-2">
+                        <p>{notif.message}</p>
+                        <span className="text-gray-500 text-sm">
+                          {/* Sprawdzenie, czy pole 'date' istnieje i wywołanie toDate() tylko wtedy, gdy nie jest null */}
+                          {notif.date ? format(notif.date.toDate(), "dd.MM.yyyy, HH:mm") : "Brak daty"}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+
+            </div>
             <img
-              src={profilePicture || "/default-profile.png"}
+              src={profilePicture || "/mini.png"}
               alt="Profile"
               className="w-10 h-10 rounded-full cursor-pointer"
               onClick={handleProfileClick}
@@ -250,16 +377,10 @@ const HomePage = () => {
                 ref={menuRef}
                 className="absolute top-full right-0 mt-2 bg-gray-800 rounded shadow-lg z-50 transition ease-out duration-200"
               >
-                <button
-                  onClick={() => navigate("/profile")}
-                  className="block px-4 py-2 text-white hover:bg-gray-700"
-                >
+                <button onClick={() => navigate("/profile")} className="block px-4 py-2 text-white hover:bg-gray-700">
                   Profil
                 </button>
-                <button
-                  onClick={handleSignOut}
-                  className="block px-4 py-2 text-white hover:bg-gray-700"
-                >
+                <button onClick={handleSignOut} className="block px-4 py-2 text-white hover:bg-gray-700">
                   Wyloguj
                 </button>
               </div>
@@ -268,17 +389,14 @@ const HomePage = () => {
         )}
       </header>
 
-      <div className="flex flex-1 justify-center items-start">
+      <div className="flex flex-1 justify-center items-start pt-16">
         <main className="w-5/6 p-4">
           {user && (
-            <div
-              className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl"
-              ref={formRef}
-            >
+            <div className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl" ref={formRef}>
               <input
                 type="text"
                 name="content"
-                placeholder="Co słychać? Dodaj nowy post..."
+                placeholder="Co słychać? Dodaj nowy post..." 
                 value={newPost.content}
                 onChange={handleInputChange}
                 className="w-full p-2 bg-gray-700 text-white rounded mb-2 hover:bg-gray-600"
@@ -288,9 +406,7 @@ const HomePage = () => {
               {isFormOpen && (
                 <>
                   <div className="flex items-center">
-                    <span className="mr-2 ml-1 text-orange-300">
-                      Dodaj do posta
-                    </span>
+                    <span className="mr-2 ml-1 text-orange-300">Dodaj do posta</span>
                     <button
                       type="button"
                       onClick={() => inputFileRef.current.click()}
@@ -305,6 +421,19 @@ const HomePage = () => {
                       ref={inputFileRef}
                       className="hidden"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker((prev) => !prev)}
+                      className="p-2 bg-gray-700 text-white rounded flex items-center ml-2"
+                    >
+                      <i className="fa-solid fa-smile"></i>
+                    </button>
+
+                    {showEmojiPicker && (
+                      <div ref={emojiPickerRef} className="absolute z-50">
+                        <EmojiPicker onEmojiClick={handleEmojiClick} />
+                      </div>
+                    )}
                   </div>
                   {newPost.imagePreview && (
                     <img
@@ -328,9 +457,7 @@ const HomePage = () => {
 
           <div className="space-y-6">
             {posts.length === 0 ? (
-              <p className="text-center text-gray-400">
-                Brak postów do wyświetlenia.
-              </p>
+              <p className="text-center text-gray-400">Brak postów do wyświetlenia.</p>
             ) : (
               posts.map((post) => (
                 <div
@@ -405,7 +532,7 @@ const HomePage = () => {
                           placeholder="Twój komentarz..."
                           value={newComment[post.id] || ""}
                           onChange={(e) => handleCommentChange(post.id, e)}
-                          onKeyDown={(e) => handleKeyDown(post.id, e)} // Dodaj obsługę Enter
+                          onKeyDown={(e) => handleKeyDown(post.id, e)}
                           className="flex-grow p-2 bg-gray-700 text-white rounded"
                         />
                         <button
@@ -416,12 +543,11 @@ const HomePage = () => {
                         </button>
                       </div>
                     )}
-                    {/* Sekcja do wyświetlania komentarzy */}
                     {post.comments.length > 0 && (
                       <div className="mt-4 border-t border-gray-600 pt-2">
                         {post.comments
                           .slice()
-                          .reverse() // Odwróć tablicę komentarzy
+                          .reverse()
                           .slice(
                             0,
                             expandedComments[post.id] ? post.comments.length : 3
