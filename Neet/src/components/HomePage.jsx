@@ -63,6 +63,7 @@ const HomePage = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+
         const docRef = doc(db, "profiles", currentUser.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -166,7 +167,15 @@ const HomePage = () => {
         likes: [],
         comments: [],
       });
-
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const docRef = doc(db, "profiles", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const profileData = docSnap.data();
+          setUser({ ...currentUser, ...profileData }); // Update user state
+        }
+      }
       setNewPost({ content: "", image: null, imagePreview: null });
       setUploading(false);
       setIsFormOpen(false);
