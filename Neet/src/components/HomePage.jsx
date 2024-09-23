@@ -102,10 +102,20 @@ const HomePage = () => {
     }
 
     try {
+      // Pobieranie danych profilu z Firestore
+      const docRef = doc(db, "profiles", user.uid);
+      const docSnap = await getDoc(docRef);
+      
+      let authorName = "Anonim"; // Domyślnie "Anonim"
+      if (docSnap.exists()) {
+        const profileData = docSnap.data();
+        authorName = `${profileData.firstName} ${profileData.lastName}`;
+      }
+
       await addDoc(collection(db, "posts"), {
         content: newPost.content,
         imageUrl: imageUrl || null,
-        author: user.displayName || "Anonim",
+        author: authorName,
         date: serverTimestamp(),
         userId: user.uid,
         profilePicture: profilePicture || null,
