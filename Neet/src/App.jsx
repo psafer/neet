@@ -11,6 +11,7 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import CreateProfilePage from "./components/CreateProfilePage";
 import ProfilePage from './components/ProfilePage';
+import UserProfile from './components/UserProfile';
 import { auth } from "./firebaseConfig"; // Import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -37,6 +38,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/createProfilePage" element={<CreateProfilePage/>}/>
         <Route path='/profile' element={<ProfilePage/>}/>
+        <Route path="/profile/:userId" element={<UserProfile />} /> 
       </Routes>
     </Router>
     </AuthProvider>
