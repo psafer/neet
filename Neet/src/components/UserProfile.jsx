@@ -17,6 +17,7 @@ const UserProfile = () => {
   const { userId } = useParams(); // Get userId from URL
   const [posts, setPosts] = useState([]);
   const [profileData, setProfileData] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState({}); // State to manage current image index for each post
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -53,6 +54,22 @@ const UserProfile = () => {
     }
   }, [userId]);
 
+  // Function to handle image navigation (previous image)
+  const handlePrevImage = (postId) => {
+    setCurrentImageIndex((prevState) => ({
+      ...prevState,
+      [postId]: prevState[postId] === 0 ? posts.find(post => post.id === postId).imageUrl.length - 1 : prevState[postId] - 1,
+    }));
+  };
+
+  // Function to handle image navigation (next image)
+  const handleNextImage = (postId) => {
+    setCurrentImageIndex((prevState) => ({
+      ...prevState,
+      [postId]: prevState[postId] === posts.find(post => post.id === postId).imageUrl.length - 1 ? 0 : prevState[postId] + 1,
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <HomePageHeader /> {/* Reusing the header from HomePage */}
@@ -82,14 +99,36 @@ const UserProfile = () => {
                 className="bg-gray-800 rounded-lg shadow-lg p-6 mb-4 mx-auto max-w-3xl border border-gray-600"
               >
                 <p className="text-gray-300">{post.content}</p>
-                {post.imageUrl && (
-                  <img
-                    src={post.imageUrl}
-                    alt="Post"
-                    className="mt-4 w-auto h-auto object-contain rounded-lg mx-auto"
-                    style={{ maxHeight: "300px" }}
-                  />
+                
+                {/* Display multiple images with navigation arrows */}
+                {post.imageUrl && post.imageUrl.length > 0 && (
+                  <div className="relative mt-4">
+                    <img
+                      src={post.imageUrl[currentImageIndex[post.id] || 0]}
+                      alt={`Post Image ${currentImageIndex[post.id] + 1 || 1}`}
+                      className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
+                    />
+
+                    {/* Navigation arrows */}
+                    {post.imageUrl.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => handlePrevImage(post.id)}
+                          className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
+                        >
+                          &#8592;
+                        </button>
+                        <button
+                          onClick={() => handleNextImage(post.id)}
+                          className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
+                        >
+                          &#8594;
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
+
                 <div className="flex justify-between mt-2 text-sm text-gray-500">
                   <span>
                     Opublikowano:{" "}
