@@ -4,9 +4,18 @@ import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PropTypes from "prop-types";
 
-const PostItem = ({ post, user, handleLike, handleCommentChange, newComment, handleAddComment, handleDeletePost }) => {
+const PostItem = ({
+  post,
+  user,
+  handleLike,
+  handleCommentChange,
+  newComment,
+  handleAddComment,
+  handleDeletePost,
+}) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0); // Stan do zarządzania aktualnym obrazem
   const [showCommentForm, setShowCommentForm] = useState(false); // Kontrolowanie widoczności formularza komentarzy
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Stan do kontrolowania widoczności menu rozwijanego
 
   // Funkcja do przełączania na poprzedni obraz
   const handlePrevImage = () => {
@@ -35,9 +44,20 @@ const PostItem = ({ post, user, handleLike, handleCommentChange, newComment, han
     setShowCommentForm((prevState) => !prevState); // Przełącza widoczność formularza komentarzy
   };
 
+  // Funkcja do przełączania widoczności menu rozwijanego
+  const toggleDropdown = () => {
+    setIsDropdownOpen((prev) => !prev); // Przełącza widoczność menu
+  };
+
+  // Funkcja do dodania do znajomych (przykład)
+  const handleAddFriend = () => {
+    alert("Dodano do znajomych!");
+    setIsDropdownOpen(false); // Zamknij menu po dodaniu znajomego
+  };
+
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl border border-gray-600 relative">
-      <div className="flex items-center mb-4">
+      <div className="flex items-center mb-4 relative">
         {post.profilePicture && (
           <img
             src={post.profilePicture}
@@ -45,14 +65,41 @@ const PostItem = ({ post, user, handleLike, handleCommentChange, newComment, han
             className="w-9 h-9 rounded-full mr-2 mb-2"
           />
         )}
-        <p className="text-lg font-semibold text-white">
-          <Link to={`/profile/${post.userId}`}>{post.author || "Anonim"}</Link>
-        </p>
+
+        {/* Klikalne imię autora z rozwijanym menu */}
+        <div className="relative">
+          <p
+            className="text-lg font-semibold text-white cursor-pointer"
+            onClick={toggleDropdown}
+          >
+            {post.author || "Anonim"}
+          </p>
+
+          {isDropdownOpen && (
+            <div className="absolute bg-gray-700 text-white rounded shadow-lg top-full mt-2 w-40 z-10">
+              <button
+                onClick={() => setIsDropdownOpen(false)}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-600"
+              >
+                <Link to={`/profile/${post.userId}`}>Profil</Link>
+              </button>
+              <button
+                onClick={handleAddFriend}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-600"
+              >
+                Dodaj do znajomych
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Sprawdzamy, czy użytkownik jest autorem posta */}
         {user && user.uid === post.userId && (
           <div className="ml-auto relative">
-            <button onClick={handleDelete} className="text-red-500 p-2 hover:text-red-700">
+            <button
+              onClick={handleDelete}
+              className="text-red-500 p-2 hover:text-red-700"
+            >
               <i className="fa-solid fa-xmark"></i> {/* Ikona X */}
             </button>
           </div>
@@ -97,10 +144,18 @@ const PostItem = ({ post, user, handleLike, handleCommentChange, newComment, han
             {/* Polubienia */}
             <button
               onClick={() => handleLike(post.id)}
-              className={`flex items-center text-sm ${post.likes.includes(user?.uid) ? "text-red-500" : "text-gray-500"}`}
+              className={`flex items-center text-sm ${
+                post.likes.includes(user?.uid)
+                  ? "text-red-500"
+                  : "text-gray-500"
+              }`}
             >
               <i
-                className={`fa-solid fa-heart mr-1 ${post.likes.includes(user?.uid) ? "text-red-500" : "text-gray-500"}`}
+                className={`fa-solid fa-heart mr-1 ${
+                  post.likes.includes(user?.uid)
+                    ? "text-red-500"
+                    : "text-gray-500"
+                }`}
               ></i>
               {post.likes.length}
             </button>

@@ -10,9 +10,10 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import { useNavigate, Link } from "react-router-dom"; // Import Link
-import { BellIcon } from "@heroicons/react/24/outline";
+import { useNavigate, Link } from "react-router-dom";
+import { BellIcon, UserGroupIcon } from "@heroicons/react/24/outline"; // Import ikonek
 import { format } from "date-fns";
+import FriendsList from "./FriendsList"; // Import komponentu FriendsList
 
 const HomePageHeader = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -21,6 +22,7 @@ const HomePageHeader = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFriendsListOpen, setIsFriendsListOpen] = useState(false); // Stan listy znajomych
   const menuRef = useRef(null);
   const navigate = useNavigate();
 
@@ -99,8 +101,6 @@ const HomePageHeader = () => {
     <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
       <div className="flex items-center">
         <Link to="/">
-          {" "}
-          {/* Link to the homepage */}
           <img
             src="/mini.png"
             alt="Logo"
@@ -154,6 +154,11 @@ const HomePageHeader = () => {
               </div>
             )}
           </div>
+          <UserGroupIcon
+            className="w-8 h-8 text-gray-400 cursor-pointer mr-4"
+            onClick={() => setIsFriendsListOpen(!isFriendsListOpen)}
+          />
+          {isFriendsListOpen && <FriendsList />} {/* Lista znajomych */}
           <img
             src={profilePicture || "/mini.png"}
             alt="Profile"
