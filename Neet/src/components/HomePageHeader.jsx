@@ -8,12 +8,18 @@ import {
   orderBy,
   onSnapshot,
   writeBatch,
+  getDocs,
+  where,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
-import { BellIcon, UserGroupIcon } from "@heroicons/react/24/outline"; // Import ikonek
+import {
+  BellIcon,
+  UserGroupIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import FriendsList from "./FriendsList"; // Import komponentu FriendsList
+import FriendsList from "./FriendsList";
 
 const HomePageHeader = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -22,8 +28,14 @@ const HomePageHeader = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isFriendsListOpen, setIsFriendsListOpen] = useState(false); // Stan listy znajomych
+  const [isFriendsListOpen, setIsFriendsListOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   const menuRef = useRef(null);
+  const friendsListRef = useRef(null);
+  const searchRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -97,9 +109,71 @@ const HomePageHeader = () => {
     }
   };
 
+  const handleSearchChange = async (e) => {
+    const searchTerm = e.target.value; // Zmieniamy nazwę zmiennej z `query` na `searchTerm`
+    setSearchQuery(searchTerm);
+
+    if (searchTerm.length > 1) {
+      const usersRef = collection(db, "profiles");
+      const q = query(
+        usersRef,
+        where("fullName", ">=", searchTerm),
+        where("fullName", "<=", searchTerm + "\uf8ff")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const results = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setSearchResults(results);
+      setIsSearchOpen(true);
+    } else {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+    }
+  };
+
+  const handleSearchSelect = (userId) => {
+    navigate(`/profile/${userId}`);
+    setIsSearchOpen(false);
+    setSearchQuery("");
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Zamknij listę znajomych, jeśli kliknięto poza nią
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        friendsListRef.current &&
+        !friendsListRef.current.contains(event.target) &&
+        !event.target.closest(".friends-icon")
+      ) {
+        setIsFriendsListOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
-      <div className="flex items-center">
+      <div className="flex items-center space-x-4">
+        {/* Logo */}
         <Link to="/">
           <img
             src="/mini.png"
@@ -107,14 +181,50 @@ const HomePageHeader = () => {
             className="w-auto h-14 rounded-full cursor-pointer"
           />
         </Link>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Znajdź użytkownika..."
+            className="bg-gray-700 text-white px-4 py-2 rounded-full focus:outline-none"
+          />
+          <MagnifyingGlassIcon className="w-5 h-5 absolute right-2 top-2 text-gray-400" />
+          {isSearchOpen && (
+            <ul
+              ref={searchRef}
+              className="absolute bg-gray-800 text-white w-full max-h-60 overflow-y-auto rounded-lg shadow-lg z-50 mt-2"
+            >
+              {searchResults.length === 0 ? (
+                <li className="p-2 text-gray-400">
+                  Nie znaleziono użytkownika
+                </li>
+              ) : (
+                searchResults.map((result) => (
+                  <li
+                    key={result.id}
+                    onClick={() => handleSearchSelect(result.id)}
+                    className="cursor-pointer hover:bg-gray-700 p-2"
+                  >
+                    {result.fullName}
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </div>
       </div>
+
       <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
         <img src="/napis.png" alt="Home Page" className="h-10" />
         <p className="text-sm text-gray-400 mt-1">Social Network</p>
       </div>
+
       {user && (
-        <div className="flex items-center">
-          <div className="relative mr-4">
+        <div className="flex items-center relative">
+          <div className="relative ml-4">
             <BellIcon
               className={`w-8 h-8 text-gray-400 cursor-pointer ${
                 unreadCount > 0 ? "bell-shake" : ""
@@ -154,11 +264,17 @@ const HomePageHeader = () => {
               </div>
             )}
           </div>
+
           <UserGroupIcon
-            className="w-8 h-8 text-gray-400 cursor-pointer mr-4"
+            className="w-8 h-8 text-gray-400 cursor-pointer mr-4 friends-icon"
             onClick={() => setIsFriendsListOpen(!isFriendsListOpen)}
           />
-          {isFriendsListOpen && <FriendsList />} {/* Lista znajomych */}
+          {isFriendsListOpen && (
+            <div ref={friendsListRef} className="absolute top-16 right-4">
+              <FriendsList />
+            </div>
+          )}
+
           <img
             src={profilePicture || "/mini.png"}
             alt="Profile"
