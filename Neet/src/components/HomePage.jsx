@@ -17,6 +17,8 @@ import { db, auth } from "../firebaseConfig";
 import HomePageHeader from "./HomePageHeader";
 import PostForm from "./PostForm";
 import PostItem from "./PostItem";
+import { useLocation } from "react-router-dom";
+import ScrollToTopButton from "./ScrollToTopButton"; // Import komponentu ScrollToTopButton
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -24,6 +26,8 @@ const HomePage = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [newComment, setNewComment] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
+  const location = useLocation();
+  const highlightedPostId = location.state?.highlightedPostId || null;
 
   useEffect(() => {
     fetchPosts();
@@ -31,7 +35,6 @@ const HomePage = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Pobieranie danych profilu użytkownika
         const docRef = doc(db, "profiles", currentUser.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -39,7 +42,6 @@ const HomePage = () => {
           setProfilePicture(profileData.profilePicture);
         }
 
-        // Nasłuchiwanie powiadomień
         const notificationsRef = collection(
           db,
           "notifications",
@@ -98,6 +100,19 @@ const HomePage = () => {
     }
   };
 
+  useEffect(() => {
+    if (highlightedPostId) {
+      const postElement = document.getElementById(highlightedPostId);
+      if (postElement) {
+        postElement.scrollIntoView({ behavior: "smooth" });
+        postElement.classList.add("highlighted-post");
+        setTimeout(() => {
+          postElement.classList.remove("highlighted-post");
+        }, 3000);
+      }
+    }
+  }, [posts, highlightedPostId]);
+
   const handleSubmitPost = async (content, imageUrl) => {
     if (!user) return;
 
@@ -110,7 +125,6 @@ const HomePage = () => {
         authorName = `${profileData.firstName} ${profileData.lastName}`;
       }
 
-      // Dodawanie nowego posta
       await addDoc(collection(db, "posts"), {
         content,
         imageUrl: imageUrl || null,
@@ -128,23 +142,20 @@ const HomePage = () => {
     }
   };
 
-  // Funkcja do usuwania posta
   const handleDeletePost = async (postId) => {
     if (!user) return;
 
     try {
       await deleteDoc(doc(db, "posts", postId));
-      fetchPosts(); // Odswieżenie postów po usunięciu
+      fetchPosts();
       alert("Post został usunięty");
     } catch (error) {
       console.error("Błąd podczas usuwania posta:", error);
     }
   };
 
-  // Funkcja do edytowania posta
   const handleEditPost = (postId) => {
     alert(`Edytuj post o ID: ${postId}`);
-    // Tutaj możesz przekierować użytkownika na stronę edycji lub otworzyć formularz edycji
   };
 
   const handleLike = async (postId) => {
@@ -162,7 +173,6 @@ const HomePage = () => {
           likes: [...postData.likes, user.uid],
         });
 
-        // Powiadomienie dla autora posta
         const notificationRef = collection(
           db,
           "notifications",
@@ -220,7 +230,6 @@ const HomePage = () => {
 
       await addDoc(commentsRef, newCommentData);
 
-      // Powiadomienie dla autora posta
       const postRef = doc(db, "posts", postId);
       const postSnapshot = await getDoc(postRef);
       const postData = postSnapshot.data();
@@ -261,21 +270,25 @@ const HomePage = () => {
           )}
           <div className="space-y-6">
             {posts.map((post) => (
-              <PostItem
-                key={post.id}
-                post={post}
-                user={user}
-                handleLike={handleLike}
-                handleCommentChange={handleCommentChange}
-                newComment={newComment}
-                handleAddComment={handleAddComment}
-                handleDeletePost={handleDeletePost} // Przekazujemy do PostItem
-                handleEditPost={handleEditPost} // Przekazujemy do PostItem
-              />
+              <div id={post.id} key={post.id}>
+                <PostItem
+                  post={post}
+                  user={user}
+                  handleLike={handleLike}
+                  handleCommentChange={handleCommentChange}
+                  newComment={newComment}
+                  handleAddComment={handleAddComment}
+                  handleDeletePost={handleDeletePost}
+                  handleEditPost={handleEditPost}
+                />
+              </div>
             ))}
           </div>
         </main>
       </div>
+
+      {/* Dodano strzałkę przewijania do góry */}
+      <ScrollToTopButton />
     </div>
   );
 };

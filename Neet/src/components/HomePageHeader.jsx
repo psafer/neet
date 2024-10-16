@@ -9,7 +9,6 @@ import {
   onSnapshot,
   writeBatch,
   getDocs,
-  where,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
@@ -20,6 +19,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
 import FriendsList from "./FriendsList";
+import debounce from "lodash/debounce";
 
 const HomePageHeader = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -109,30 +109,36 @@ const HomePageHeader = () => {
     }
   };
 
-  const handleSearchChange = async (e) => {
-    const searchTerm = e.target.value; // Zmieniamy nazwę zmiennej z `query` na `searchTerm`
-    setSearchQuery(searchTerm);
-
+  // Funkcja do pobierania danych z Firestore (opóźniona)
+  const fetchSearchResults = debounce(async (searchTerm) => {
     if (searchTerm.length > 1) {
       const usersRef = collection(db, "profiles");
-      const q = query(
-        usersRef,
-        where("fullName", ">=", searchTerm),
-        where("fullName", "<=", searchTerm + "\uf8ff")
-      );
 
+      // Pobieramy wszystkich użytkowników (to nie jest optymalne, ale tymczasowe rozwiązanie)
+      const q = query(usersRef, orderBy("firstName"));
       const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
 
-      setSearchResults(results);
+      // Filtrowanie wyników w pamięci
+      const filteredResults = querySnapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((user) => {
+          const fullName = `${user.firstName.toLowerCase()} ${user.lastName.toLowerCase()}`;
+          return fullName.includes(searchTerm.toLowerCase());
+        });
+
+      setSearchResults(filteredResults);
       setIsSearchOpen(true);
     } else {
       setSearchResults([]);
       setIsSearchOpen(false);
     }
+  }, 500);
+
+  // Funkcja obsługująca zmianę inputa
+  const handleSearchChange = (e) => {
+    const searchTerm = e.target.value;
+    setSearchQuery(searchTerm);
+    fetchSearchResults(searchTerm);
   };
 
   const handleSearchSelect = (userId) => {
@@ -153,7 +159,6 @@ const HomePageHeader = () => {
     };
   }, []);
 
-  // Zamknij listę znajomych, jeśli kliknięto poza nią
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -206,9 +211,14 @@ const HomePageHeader = () => {
                   <li
                     key={result.id}
                     onClick={() => handleSearchSelect(result.id)}
-                    className="cursor-pointer hover:bg-gray-700 p-2"
+                    className="cursor-pointer hover:bg-gray-700 p-2 flex items-center"
                   >
-                    {result.fullName}
+                    <img
+                      src={result.profilePicture || "/default-profile.png"}
+                      alt={`${result.firstName} ${result.lastName}`}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    {result.firstName} {result.lastName}
                   </li>
                 ))
               )}
