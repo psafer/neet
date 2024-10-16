@@ -49,12 +49,6 @@ const PostItem = ({
     setIsDropdownOpen((prev) => !prev); // Przełącza widoczność menu
   };
 
-  // Funkcja do dodania do znajomych (przykład)
-  const handleAddFriend = () => {
-    alert("Dodano do znajomych!");
-    setIsDropdownOpen(false); // Zamknij menu po dodaniu znajomego
-  };
-
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl border border-gray-600 relative">
       <div className="flex items-center mb-4 relative">
@@ -82,12 +76,6 @@ const PostItem = ({
                 className="block w-full text-left px-4 py-2 hover:bg-gray-600"
               >
                 <Link to={`/profile/${post.userId}`}>Profil</Link>
-              </button>
-              <button
-                onClick={handleAddFriend}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-600"
-              >
-                Dodaj do znajomych
               </button>
             </div>
           )}
