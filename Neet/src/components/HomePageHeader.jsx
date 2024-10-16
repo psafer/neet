@@ -214,7 +214,7 @@ const HomePageHeader = () => {
                     className="cursor-pointer hover:bg-gray-700 p-2 flex items-center"
                   >
                     <img
-                      src={result.profilePicture || "/default-profile.png"}
+                      src={result.profilePicture || "/mini.png"}
                       alt={`${result.firstName} ${result.lastName}`}
                       className="w-8 h-8 rounded-full mr-2"
                     />

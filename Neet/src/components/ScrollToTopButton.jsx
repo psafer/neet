@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ArrowUpIcon } from "@heroicons/react/24/outline"; // Heroicons v2
 
 const ScrollToTopButton = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -30,13 +31,18 @@ const ScrollToTopButton = () => {
   return (
     <div>
       {isVisible && (
-        <button
+        <div
           onClick={scrollToTop}
-          className="fixed top-20 left-80 bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-orange-500 hover:scale-110 focus:outline-none transition duration-300 ease-in-out scroll-bounce"
-          style={{ fontSize: "24px" }}
+          className="fixed top-20 left-60 bg-transparent cursor-pointer hover:scale-110 transition-transform duration-300 ease-in-out group"
         >
-          &#8679;
-        </button>
+          {/* Strzałka z grubszym konturem i animacją "bounce" */}
+          <ArrowUpIcon className="w-10 h-10 text-orange-500 animate-bounce stroke-[2]" />
+
+          {/* Napis "w górę" pojawia się po najechaniu na strzałkę */}
+          <span className="block mt-2 text-xs text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            w górę
+          </span>
+        </div>
       )}
     </div>
   );
