@@ -5,7 +5,11 @@ import PropTypes from "prop-types"; // Import PropTypes
 import { storage } from "../firebaseConfig";
 
 const PostForm = ({ handleSubmitPost }) => {
-  const [newPost, setNewPost] = useState({ content: "", images: [], imagePreviews: [] });
+  const [newPost, setNewPost] = useState({
+    content: "",
+    images: [],
+    imagePreviews: [],
+  });
   const [uploading, setUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false); // Stan do kontroli rozwijania formularza
@@ -20,7 +24,10 @@ const PostForm = ({ handleSubmitPost }) => {
         setIsFormOpen(false); // Zamknij formularz
       }
 
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(e.target)
+      ) {
         setShowEmojiPicker(false); // Zamknij Emoji Picker
       }
     };
@@ -94,7 +101,10 @@ const PostForm = ({ handleSubmitPost }) => {
   };
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl" ref={formRef}>
+    <div
+      className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl"
+      ref={formRef}
+    >
       <input
         type="text"
         name="content"
@@ -103,13 +113,18 @@ const PostForm = ({ handleSubmitPost }) => {
         onChange={handleInputChange}
         className="w-full p-2 bg-gray-700 text-white rounded mb-2 hover:bg-gray-600"
         onClick={() => setIsFormOpen(true)} // Otwórz formularz po kliknięciu
+        autoComplete="off"
       />
-      
+
       {isFormOpen && ( // Wyświetl dodatkowe opcje tylko po otwarciu formularza
         <>
           <div className="flex items-center relative">
             <span className="mr-2 ml-1 text-orange-300">Dodaj do posta:</span>
-            <button type="button" onClick={() => inputFileRef.current.click()} className="p-2 bg-gray-700 text-white rounded">
+            <button
+              type="button"
+              onClick={() => inputFileRef.current.click()}
+              className="p-2 bg-gray-700 text-white rounded"
+            >
               <i className="fa-solid fa-camera"></i>
             </button>
             <input
@@ -120,21 +135,30 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={inputFileRef}
               className="hidden"
             />
-            <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 bg-gray-700 text-white rounded ml-2">
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-2 bg-gray-700 text-white rounded ml-2"
+            >
               <i className="fa-solid fa-smile"></i>
             </button>
-            
+
             {/* Emoji Picker */}
             {showEmojiPicker && (
               <div
                 ref={emojiPickerRef}
-                style={{ position: 'absolute', zIndex: 100, top: '50px', left: '0' }} // Ustawienie Emoji Picker nad formularzem
+                style={{
+                  position: "absolute",
+                  zIndex: 100,
+                  top: "50px",
+                  left: "0",
+                }} // Ustawienie Emoji Picker nad formularzem
               >
                 <EmojiPicker onEmojiClick={handleEmojiClick} />
               </div>
             )}
           </div>
-          
+
           {/* Podgląd obrazów */}
           <div className="flex flex-wrap gap-2 mt-2">
             {newPost.imagePreviews.map((preview, index) => (
@@ -155,8 +179,12 @@ const PostForm = ({ handleSubmitPost }) => {
               </div>
             ))}
           </div>
-          
-          <button onClick={handleSubmit} className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full mt-2" disabled={uploading}>
+
+          <button
+            onClick={handleSubmit}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded w-full mt-2"
+            disabled={uploading}
+          >
             {uploading ? "Wysyłanie..." : "Dodaj Post"}
           </button>
         </>

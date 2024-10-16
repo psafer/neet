@@ -17,6 +17,7 @@ import {
 const FriendsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [friends, setFriends] = useState([]); // Lista znajomych pobrana z Firestore
+  const [isOpen, setIsOpen] = useState(true); // Nowy stan do kontrolowania widoczności listy
   const listRef = useRef(null); // Referencja do listy znajomych
   const navigate = useNavigate(); // Hook do nawigacji
 
@@ -92,50 +93,52 @@ const FriendsList = () => {
   };
 
   return (
-    <div
-      ref={listRef}
-      className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white z-50"
-    >
-      <input
-        type="text"
-        placeholder="Wyszukaj znajomego..."
-        className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      {filteredFriends.length > 0 ? (
-        filteredFriends.map((friend) => (
-          <div
-            key={friend.id}
-            className="border-b border-gray-600 py-2 flex items-center justify-between"
-          >
-            <div className="flex items-center">
-              <img
-                src={friend.profilePicture}
-                alt={`${friend.name}'s profile`}
-                className="w-8 h-8 rounded-full mr-2"
-              />
-              <p>{friend.name}</p>
+    isOpen && (
+      <div
+        ref={listRef}
+        className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white z-50"
+      >
+        <input
+          type="text"
+          placeholder="Wyszukaj znajomego..."
+          className="w-full p-2 mb-4 bg-gray-700 text-white rounded"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        {filteredFriends.length > 0 ? (
+          filteredFriends.map((friend) => (
+            <div
+              key={friend.id}
+              className="border-b border-gray-600 py-2 flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <img
+                  src={friend.profilePicture}
+                  alt={`${friend.name}'s profile`}
+                  className="w-8 h-8 rounded-full mr-2"
+                />
+                <p>{friend.name}</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                {/* Ikonka ludzika - prowadzi do profilu użytkownika */}
+                <button
+                  onClick={() => goToProfile(friend.id)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <UserIcon className="w-5 h-5" />
+                </button>
+                {/* Ikonka czatu */}
+                <button className="text-gray-400 hover:text-white">
+                  <ChatBubbleLeftEllipsisIcon className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              {/* Ikonka ludzika - prowadzi do profilu użytkownika */}
-              <button
-                onClick={() => goToProfile(friend.id)}
-                className="text-gray-400 hover:text-white"
-              >
-                <UserIcon className="w-5 h-5" />
-              </button>
-              {/* Ikonka czatu */}
-              <button className="text-gray-400 hover:text-white">
-                <ChatBubbleLeftEllipsisIcon className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        ))
-      ) : (
-        <p className="text-gray-400">Brak wyników</p>
-      )}
-    </div>
+          ))
+        ) : (
+          <p className="text-gray-400">Brak wyników</p>
+        )}
+      </div>
+    )
   );
 };
 

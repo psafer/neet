@@ -109,16 +109,12 @@ const HomePageHeader = () => {
     }
   };
 
-  // Funkcja do pobierania danych z Firestore (opóźniona)
   const fetchSearchResults = debounce(async (searchTerm) => {
     if (searchTerm.length > 1) {
       const usersRef = collection(db, "profiles");
-
-      // Pobieramy wszystkich użytkowników (to nie jest optymalne, ale tymczasowe rozwiązanie)
       const q = query(usersRef, orderBy("firstName"));
       const querySnapshot = await getDocs(q);
 
-      // Filtrowanie wyników w pamięci
       const filteredResults = querySnapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter((user) => {
@@ -134,7 +130,6 @@ const HomePageHeader = () => {
     }
   }, 500);
 
-  // Funkcja obsługująca zmianę inputa
   const handleSearchChange = (e) => {
     const searchTerm = e.target.value;
     setSearchQuery(searchTerm);
@@ -175,10 +170,19 @@ const HomePageHeader = () => {
     };
   }, []);
 
+  const toggleNotifications = () => {
+    setIsNotificationsOpen((prev) => !prev);
+    if (!isNotificationsOpen) setIsFriendsListOpen(false);
+  };
+
+  const toggleFriendsList = () => {
+    setIsFriendsListOpen((prev) => !prev);
+    if (!isFriendsListOpen) setIsNotificationsOpen(false);
+  };
+
   return (
     <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
       <div className="flex items-center space-x-4">
-        {/* Logo */}
         <Link to="/">
           <img
             src="/mini.png"
@@ -194,7 +198,7 @@ const HomePageHeader = () => {
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder="Znajdź użytkownika..."
-            className="bg-gray-700 text-white px-4 py-2 rounded-full focus:outline-none"
+            className="bg-gray-700 text-white px-4 py-2 rounded-full focus:outline-none md:w-64 w-16"
           />
           <MagnifyingGlassIcon className="w-5 h-5 absolute right-2 top-2 text-gray-400" />
           {isSearchOpen && (
@@ -228,8 +232,10 @@ const HomePageHeader = () => {
       </div>
 
       <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-        <img src="/napis.png" alt="Home Page" className="h-10" />
-        <p className="text-sm text-gray-400 mt-1">Social Network</p>
+        <img src="/napis.png" alt="Home Page" className="h-10 md:h-10 h-8" />
+        <p className="text-sm text-gray-400 mt-1 hidden md:block">
+          Social Network
+        </p>
       </div>
 
       {user && (
@@ -239,7 +245,7 @@ const HomePageHeader = () => {
               className={`w-8 h-8 text-gray-400 cursor-pointer ${
                 unreadCount > 0 ? "bell-shake" : ""
               }`}
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              onClick={toggleNotifications}
             />
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
@@ -277,7 +283,7 @@ const HomePageHeader = () => {
 
           <UserGroupIcon
             className="w-8 h-8 text-gray-400 cursor-pointer mr-4 friends-icon"
-            onClick={() => setIsFriendsListOpen(!isFriendsListOpen)}
+            onClick={toggleFriendsList}
           />
           {isFriendsListOpen && (
             <div ref={friendsListRef} className="absolute top-16 right-4">

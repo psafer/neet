@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PropTypes from "prop-types";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig"; // Import Firebase configuration
 
 const PostItem = ({
   post,
@@ -16,6 +18,25 @@ const PostItem = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0); // Stan do zarządzania aktualnym obrazem
   const [showCommentForm, setShowCommentForm] = useState(false); // Kontrolowanie widoczności formularza komentarzy
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Stan do kontrolowania widoczności menu rozwijanego
+  const [isFollowing, setIsFollowing] = useState(false); // Stan, czy użytkownik obserwuje autora
+
+  // Funkcja do sprawdzania, czy użytkownik obserwuje autora posta
+  useEffect(() => {
+    const checkFollowingStatus = async () => {
+      if (user) {
+        const followersRef = collection(db, "followers");
+        const q = query(
+          followersRef,
+          where("followerId", "==", user.uid),
+          where("followingId", "==", post.userId)
+        );
+        const querySnapshot = await getDocs(q);
+        setIsFollowing(!querySnapshot.empty); // Jeśli są wyniki, oznacza to, że obserwuje
+      }
+    };
+
+    checkFollowingStatus();
+  }, [user, post.userId]);
 
   // Funkcja do przełączania na poprzedni obraz
   const handlePrevImage = () => {
@@ -61,13 +82,18 @@ const PostItem = ({
         )}
 
         {/* Klikalne imię autora z rozwijanym menu */}
-        <div className="relative">
+        <div className="relative flex items-center">
           <p
             className="text-lg font-semibold text-white cursor-pointer"
             onClick={toggleDropdown}
           >
             {post.author || "Anonim"}
           </p>
+
+          {/* Wyświetlanie ikonki ptaszka w kółku, jeśli użytkownik obserwuje autora */}
+          {isFollowing && (
+            <i className="fa-solid fa-check-circle ml-2 text-green-500"></i>
+          )}
 
           {isDropdownOpen && (
             <div className="absolute bg-gray-700 text-white rounded shadow-lg top-full mt-2 w-40 z-10">
@@ -198,7 +224,7 @@ PostItem.propTypes = {
         content: PropTypes.string,
         date: PropTypes.object,
       })
-    ), // Dodanie walidacji comments
+    ),
     likes: PropTypes.arrayOf(PropTypes.string).isRequired,
     date: PropTypes.object,
   }).isRequired,
@@ -209,7 +235,7 @@ PostItem.propTypes = {
   handleCommentChange: PropTypes.func.isRequired,
   newComment: PropTypes.object.isRequired,
   handleAddComment: PropTypes.func.isRequired,
-  handleDeletePost: PropTypes.func.isRequired, // Funkcja do usunięcia posta
+  handleDeletePost: PropTypes.func.isRequired,
 };
 
 export default PostItem;
