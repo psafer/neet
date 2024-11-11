@@ -3,7 +3,6 @@ import EmojiPicker from "emoji-picker-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import PropTypes from "prop-types";
 import { storage } from "../firebaseConfig";
-import { HomeIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
 const PostForm = ({ handleSubmitPost }) => {
   const [newPost, setNewPost] = useState({
@@ -69,6 +68,7 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
+  // Obsługa zmiany wideo
   const handleVideoChange = (e) => {
     const files = Array.from(e.target.files);
     const videoPreviews = files.map((file) => URL.createObjectURL(file));
@@ -80,9 +80,10 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
+  // Obsługa zmiany audio
   const handleAudioChange = (e) => {
     const files = Array.from(e.target.files);
-    const audioPreviews = files.map((file) => file.name);
+    const audioPreviews = files.map((file) => file.name); // Nazwa pliku jako podgląd audio
 
     setNewPost((prevPost) => ({
       ...prevPost,
@@ -143,6 +144,7 @@ const PostForm = ({ handleSubmitPost }) => {
     e.preventDefault();
     setUploading(true);
 
+    // Uploadowanie zdjęć
     const uploadedImageUrls = await Promise.all(
       newPost.images.map(async (image) => {
         const storageRef = ref(storage, `posts/images/${image.name}`);
@@ -152,6 +154,7 @@ const PostForm = ({ handleSubmitPost }) => {
       })
     );
 
+    // Uploadowanie wideo
     const uploadedVideoUrls = await Promise.all(
       newPost.videos.map(async (video) => {
         const storageRef = ref(storage, `posts/videos/${video.name}`);
@@ -161,6 +164,7 @@ const PostForm = ({ handleSubmitPost }) => {
       })
     );
 
+    // Uploadowanie audio
     const uploadedAudioUrls = await Promise.all(
       newPost.audio.map(async (audioFile) => {
         const storageRef = ref(storage, `posts/audio/${audioFile.name}`);
@@ -175,7 +179,7 @@ const PostForm = ({ handleSubmitPost }) => {
       uploadedImageUrls,
       uploadedVideoUrls,
       uploadedAudioUrls,
-      newPost.privacy
+      newPost.privacy // Przekazanie ustawienia prywatności
     );
     setUploading(false);
     setNewPost({
@@ -186,7 +190,7 @@ const PostForm = ({ handleSubmitPost }) => {
       videoPreviews: [],
       audio: [],
       audioPreviews: [],
-      privacy: "public",
+      privacy: "public", // Resetowanie domyślnej opcji prywatności
     });
     setIsFormOpen(false);
   };
@@ -211,6 +215,7 @@ const PostForm = ({ handleSubmitPost }) => {
         <>
           <div className="flex items-center relative">
             <span className="mr-2 ml-1 text-orange-300">Dodaj do posta:</span>
+            {/* Zdjęcia */}
             <button
               type="button"
               onClick={() => inputFileRef.current.click()}
@@ -226,6 +231,7 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={inputFileRef}
               className="hidden"
             />
+            {/* Wideo */}
             <button
               type="button"
               onClick={() => videoFileRef.current.click()}
@@ -241,6 +247,7 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={videoFileRef}
               className="hidden"
             />
+            {/* Audio */}
             <button
               type="button"
               onClick={() => audioFileRef.current.click()}
@@ -256,6 +263,7 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={audioFileRef}
               className="hidden"
             />
+            {/* Emoji */}
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -279,35 +287,35 @@ const PostForm = ({ handleSubmitPost }) => {
             )}
           </div>
 
-          <div className="ml-1 mt-4 flex items-center">
-            <span className="text-white mr-7">Opublikuj na:</span>
-            <div className="flex ml- w-3/4">
+          <div className="mt-4">
+            <label className="text-white">Prywatność:</label>
+            <div className="flex mt-2">
+              {/* Publiczny Post Button */}
               <button
                 type="button"
                 onClick={() =>
                   setNewPost((prev) => ({ ...prev, privacy: "public" }))
                 }
-                className={`py-2 w-12 flex justify-center items-center ${
-                  newPost.privacy === "public"
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-600 text-gray-200"
-                } rounded-l-lg focus:outline-none`}
+                className={`p-3 rounded-full ${
+                  newPost.privacy === "public" ? "bg-blue-500" : "bg-gray-700"
+                } text-white flex items-center space-x-2`}
               >
-                <HomeIcon className="h-5 w-5 mr-1" />
+                <i className="fa-solid fa-earth-americas"></i>
+                <span>Publiczny</span>
               </button>
 
+              {/* Tylko dla znajomych Button */}
               <button
                 type="button"
                 onClick={() =>
                   setNewPost((prev) => ({ ...prev, privacy: "friends" }))
                 }
-                className={`py-2 w-12 flex justify-center items-center ${
-                  newPost.privacy === "friends"
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-600 text-gray-200"
-                } rounded-r-lg focus:outline-none`}
+                className={`p-3 rounded-full ${
+                  newPost.privacy === "friends" ? "bg-green-500" : "bg-gray-700"
+                } text-white flex items-center space-x-2 ml-4`}
               >
-                <UserGroupIcon className="h-5 w-5 mr-1" />
+                <i className="fa-solid fa-users"></i>
+                <span>Tylko dla znajomych</span>
               </button>
             </div>
           </div>
