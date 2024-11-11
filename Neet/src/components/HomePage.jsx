@@ -122,7 +122,7 @@ const HomePage = () => {
     }
   }, [posts, highlightedPostId]);
 
-  const handleSubmitPost = async (content, imageUrl) => {
+  const handleSubmitPost = async (content, imageUrl, videoUrl, audioUrl) => {
     if (!user) return;
 
     try {
@@ -137,6 +137,8 @@ const HomePage = () => {
       await addDoc(collection(db, "posts"), {
         content,
         imageUrl: imageUrl || null,
+        videoUrl: videoUrl || null,
+        audioUrl: audioUrl || null,
         author: authorName,
         date: serverTimestamp(),
         userId: user.uid,

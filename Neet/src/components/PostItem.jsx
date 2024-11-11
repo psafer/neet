@@ -15,12 +15,11 @@ const PostItem = ({
   handleAddComment,
   handleDeletePost,
 }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0); // Stan do zarządzania aktualnym obrazem
-  const [showCommentForm, setShowCommentForm] = useState(false); // Kontrolowanie widoczności formularza komentarzy
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Stan do kontrolowania widoczności menu rozwijanego
-  const [isFollowing, setIsFollowing] = useState(false); // Stan, czy użytkownik obserwuje autora
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showCommentForm, setShowCommentForm] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  // Funkcja do sprawdzania, czy użytkownik obserwuje autora posta
   useEffect(() => {
     const checkFollowingStatus = async () => {
       if (user) {
@@ -31,43 +30,38 @@ const PostItem = ({
           where("followingId", "==", post.userId)
         );
         const querySnapshot = await getDocs(q);
-        setIsFollowing(!querySnapshot.empty); // Jeśli są wyniki, oznacza to, że obserwuje
+        setIsFollowing(!querySnapshot.empty);
       }
     };
 
     checkFollowingStatus();
   }, [user, post.userId]);
 
-  // Funkcja do przełączania na poprzedni obraz
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) =>
       prevIndex === 0 ? post.imageUrl.length - 1 : prevIndex - 1
     );
   };
 
-  // Funkcja do przełączania na następny obraz
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) =>
       prevIndex === post.imageUrl.length - 1 ? 0 : prevIndex + 1
     );
   };
 
-  // Funkcja do usuwania posta
   const handleDelete = () => {
     const confirmed = window.confirm("Czy na pewno chcesz usunąć post?");
     if (confirmed) {
-      handleDeletePost(post.id); // Jeśli użytkownik potwierdzi, post zostanie usunięty
+      handleDeletePost(post.id);
     }
   };
 
-  // Funkcja do przełączania formularza komentarzy
   const toggleCommentForm = () => {
-    setShowCommentForm((prevState) => !prevState); // Przełącza widoczność formularza komentarzy
+    setShowCommentForm((prevState) => !prevState);
   };
 
-  // Funkcja do przełączania widoczności menu rozwijanego
   const toggleDropdown = () => {
-    setIsDropdownOpen((prev) => !prev); // Przełącza widoczność menu
+    setIsDropdownOpen((prev) => !prev);
   };
 
   return (
@@ -81,7 +75,6 @@ const PostItem = ({
           />
         )}
 
-        {/* Klikalne imię autora z rozwijanym menu */}
         <div className="relative flex items-center">
           <p
             className="text-lg font-semibold text-white cursor-pointer"
@@ -90,7 +83,6 @@ const PostItem = ({
             {post.author || "Anonim"}
           </p>
 
-          {/* Wyświetlanie ikonki ptaszka w kółku, jeśli użytkownik obserwuje autora */}
           {isFollowing && (
             <i className="fa-solid fa-check-circle ml-2 text-green-500"></i>
           )}
@@ -107,14 +99,13 @@ const PostItem = ({
           )}
         </div>
 
-        {/* Sprawdzamy, czy użytkownik jest autorem posta */}
         {user && user.uid === post.userId && (
           <div className="ml-auto relative">
             <button
               onClick={handleDelete}
               className="text-red-500 p-2 hover:text-red-700"
             >
-              <i className="fa-solid fa-xmark"></i> {/* Ikona X */}
+              <i className="fa-solid fa-xmark"></i>
             </button>
           </div>
         )}
@@ -126,14 +117,11 @@ const PostItem = ({
         {/* Obsługa obrazków */}
         {post.imageUrl && post.imageUrl.length > 0 && (
           <div className="relative mt-4">
-            {/* Wyświetlanie bieżącego obrazka */}
             <img
               src={post.imageUrl[currentImageIndex]}
               alt={`Post Image ${currentImageIndex + 1}`}
               className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
             />
-
-            {/* Strzałki do nawigacji między obrazkami */}
             {post.imageUrl.length > 1 && (
               <>
                 <button
@@ -153,9 +141,36 @@ const PostItem = ({
           </div>
         )}
 
+        {/* Obsługa wideo */}
+        {post.videoUrl && post.videoUrl.length > 0 && (
+          <div className="relative mt-4">
+            {post.videoUrl.map((video, index) => (
+              <video
+                key={index}
+                src={video}
+                controls
+                className="w-full h-64 object-contain rounded-lg mx-auto"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Obsługa audio */}
+        {post.audioUrl && post.audioUrl.length > 0 && (
+          <div className="relative mt-4">
+            {post.audioUrl.map((audio, index) => (
+              <audio
+                key={index}
+                src={audio}
+                controls
+                className="w-full rounded-lg mx-auto"
+              />
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center">
-            {/* Polubienia */}
             <button
               onClick={() => handleLike(post.id)}
               className={`flex items-center text-sm ${
@@ -173,8 +188,6 @@ const PostItem = ({
               ></i>
               {post.likes.length}
             </button>
-
-            {/* Dymek do wyświetlania formularza komentarzy */}
             <button
               onClick={toggleCommentForm}
               className="flex items-center text-sm text-gray-500 ml-4"
@@ -183,8 +196,6 @@ const PostItem = ({
               {post.comments?.length || 0}
             </button>
           </div>
-
-          {/* Data publikacji po prawej stronie */}
           <div className="mt-2 text-sm text-gray-500">
             Opublikowano:{" "}
             {post.date
@@ -193,7 +204,7 @@ const PostItem = ({
           </div>
         </div>
 
-        {/* Sekcja komentarzy (formularz pojawia się po kliknięciu w ikonę dymka) */}
+        {/* Sekcja komentarzy */}
         {showCommentForm && (
           <CommentSection
             post={post}
@@ -217,6 +228,8 @@ PostItem.propTypes = {
     author: PropTypes.string,
     content: PropTypes.string.isRequired,
     imageUrl: PropTypes.arrayOf(PropTypes.string),
+    videoUrl: PropTypes.arrayOf(PropTypes.string),
+    audioUrl: PropTypes.arrayOf(PropTypes.string), // Dodano pole audio
     comments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,
