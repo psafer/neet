@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import PropTypes from "prop-types"; // Import PropTypes
+import PropTypes from "prop-types";
 import { storage } from "../firebaseConfig";
 
 const PostForm = ({ handleSubmitPost }) => {
@@ -12,23 +12,22 @@ const PostForm = ({ handleSubmitPost }) => {
   });
   const [uploading, setUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false); // Stan do kontroli rozwijania formularza
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const inputFileRef = useRef(null);
-  const formRef = useRef(null); // Referencja do formularza
-  const emojiPickerRef = useRef(null); // Referencja do Emoji Picker
+  const formRef = useRef(null);
+  const emojiPickerRef = useRef(null);
 
-  // Nasłuchiwanie kliknięć poza formularzem
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (formRef.current && !formRef.current.contains(e.target)) {
-        setIsFormOpen(false); // Zamknij formularz
+        setIsFormOpen(false);
       }
 
       if (
         emojiPickerRef.current &&
         !emojiPickerRef.current.contains(e.target)
       ) {
-        setShowEmojiPicker(false); // Zamknij Emoji Picker
+        setShowEmojiPicker(false);
       }
     };
 
@@ -51,7 +50,6 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
-  // Obsługa zmiany zdjęć
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const imagePreviews = files.map((file) => URL.createObjectURL(file));
@@ -63,14 +61,13 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
-  // Usuwanie zdjęcia z podglądu
   const handleRemoveImage = (index) => {
     setNewPost((prevPost) => {
       const updatedImages = [...prevPost.images];
       const updatedPreviews = [...prevPost.imagePreviews];
 
-      updatedImages.splice(index, 1); // Usuwamy obraz
-      updatedPreviews.splice(index, 1); // Usuwamy podgląd
+      updatedImages.splice(index, 1);
+      updatedPreviews.splice(index, 1);
 
       return {
         ...prevPost,
@@ -84,7 +81,6 @@ const PostForm = ({ handleSubmitPost }) => {
     e.preventDefault();
     setUploading(true);
 
-    // Uploadowanie każdego obrazu
     const uploadedImageUrls = await Promise.all(
       newPost.images.map(async (image) => {
         const storageRef = ref(storage, `posts/${image.name}`);
@@ -97,12 +93,12 @@ const PostForm = ({ handleSubmitPost }) => {
     handleSubmitPost(newPost.content, uploadedImageUrls);
     setUploading(false);
     setNewPost({ content: "", images: [], imagePreviews: [] });
-    setIsFormOpen(false); // Zamknij formularz po dodaniu posta
+    setIsFormOpen(false);
   };
 
   return (
     <div
-      className="bg-gray-800 p-4 rounded-lg mb-6 mx-auto max-w-3xl"
+      className="bg-gray-800 p-4 rounded-lg mb-1 w-full max-w-3xl"
       ref={formRef}
     >
       <input
@@ -112,11 +108,11 @@ const PostForm = ({ handleSubmitPost }) => {
         value={newPost.content}
         onChange={handleInputChange}
         className="w-full p-2 bg-gray-700 text-white rounded mb-2 hover:bg-gray-600"
-        onClick={() => setIsFormOpen(true)} // Otwórz formularz po kliknięciu
+        onClick={() => setIsFormOpen(true)}
         autoComplete="off"
       />
 
-      {isFormOpen && ( // Wyświetl dodatkowe opcje tylko po otwarciu formularza
+      {isFormOpen && (
         <>
           <div className="flex items-center relative">
             <span className="mr-2 ml-1 text-orange-300">Dodaj do posta:</span>
@@ -130,7 +126,7 @@ const PostForm = ({ handleSubmitPost }) => {
             <input
               type="file"
               accept="image/*"
-              multiple // Pozwala na wybranie wielu zdjęć
+              multiple
               onChange={handleImageChange}
               ref={inputFileRef}
               className="hidden"
@@ -143,7 +139,6 @@ const PostForm = ({ handleSubmitPost }) => {
               <i className="fa-solid fa-smile"></i>
             </button>
 
-            {/* Emoji Picker */}
             {showEmojiPicker && (
               <div
                 ref={emojiPickerRef}
@@ -152,14 +147,13 @@ const PostForm = ({ handleSubmitPost }) => {
                   zIndex: 100,
                   top: "50px",
                   left: "0",
-                }} // Ustawienie Emoji Picker nad formularzem
+                }}
               >
                 <EmojiPicker onEmojiClick={handleEmojiClick} />
               </div>
             )}
           </div>
 
-          {/* Podgląd obrazów */}
           <div className="flex flex-wrap gap-2 mt-2">
             {newPost.imagePreviews.map((preview, index) => (
               <div key={index} className="relative">
@@ -168,7 +162,6 @@ const PostForm = ({ handleSubmitPost }) => {
                   alt={`Preview ${index}`}
                   className="w-32 h-auto object-cover rounded opacity-60"
                 />
-                {/* Przyciski do usunięcia zdjęcia */}
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(index)}
@@ -193,9 +186,8 @@ const PostForm = ({ handleSubmitPost }) => {
   );
 };
 
-// Dodaj walidację `props` za pomocą PropTypes
 PostForm.propTypes = {
-  handleSubmitPost: PropTypes.func.isRequired, // Walidacja funkcji
+  handleSubmitPost: PropTypes.func.isRequired,
 };
 
 export default PostForm;

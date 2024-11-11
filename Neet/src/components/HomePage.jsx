@@ -9,7 +9,7 @@ import {
   orderBy,
   serverTimestamp,
   onSnapshot,
-  deleteDoc, // Import do usuwania posta
+  deleteDoc,
 } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -18,14 +18,16 @@ import HomePageHeader from "./HomePageHeader";
 import PostForm from "./PostForm";
 import PostItem from "./PostItem";
 import { useLocation } from "react-router-dom";
-import ScrollToTopButton from "./ScrollToTopButton"; // Import komponentu ScrollToTopButton
+import ScrollToTopButton from "./ScrollToTopButton";
+import FilterPosts from "./FilterPosts"; // Import komponentu filtrowania
 
 const HomePage = () => {
-  const [posts, setPosts] = useState([]);
-  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]); // Wszystkie posty
+  const [user, setUser] = useState(null); // Aktualnie zalogowany użytkownik
   const [profilePicture, setProfilePicture] = useState(null);
   const [newComment, setNewComment] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
+  const [filter, setFilter] = useState("all"); // Dodany stan filtra, domyślnie ustawiony na "all" (wszystkie posty)
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
@@ -99,6 +101,13 @@ const HomePage = () => {
       console.error("Błąd podczas pobierania postów:", error);
     }
   };
+
+  // Dodano logikę filtrowania postów w oparciu o stan "filter"
+  const filteredPosts = posts.filter((post) => {
+    if (filter === "all") return true; // Jeśli filtr jest "all", pokaż wszystkie posty
+    if (filter === "friends") return post.userId && post.userId !== user.uid; // Jeśli filtr jest "friends", pokaż tylko posty od znajomych
+    return true;
+  });
 
   useEffect(() => {
     if (highlightedPostId) {
@@ -262,14 +271,20 @@ const HomePage = () => {
       <div className="flex flex-1 justify-center items-start pt-16">
         <main className="w-5/6 p-4">
           {user && (
-            <PostForm
-              user={user}
-              profilePicture={profilePicture}
-              handleSubmitPost={handleSubmitPost}
-            />
+            <div className="w-full flex flex-col items-center mb-4">
+              {" "}
+              {/* Kontener wyrównujący */}
+              <FilterPosts currentFilter={filter} setFilter={setFilter} />
+              <PostForm
+                user={user}
+                profilePicture={profilePicture}
+                handleSubmitPost={handleSubmitPost}
+              />
+            </div>
           )}
           <div className="space-y-6">
-            {posts.map((post) => (
+            {/* Użycie "filteredPosts" zamiast "posts" do wyświetlania przefiltrowanych postów */}
+            {filteredPosts.map((post) => (
               <div id={post.id} key={post.id}>
                 <PostItem
                   post={post}
@@ -287,7 +302,6 @@ const HomePage = () => {
         </main>
       </div>
 
-      {/* Dodano strzałkę przewijania do góry */}
       <ScrollToTopButton />
     </div>
   );
