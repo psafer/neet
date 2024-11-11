@@ -28,7 +28,6 @@ const HomePage = () => {
   const [newComment, setNewComment] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState("all"); // Dodany stan filtra, domyślnie ustawiony na "all" (wszystkie posty)
-  const [friends, setFriends] = useState([]); // Lista znajomych
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
@@ -44,17 +43,6 @@ const HomePage = () => {
           const profileData = docSnap.data();
           setProfilePicture(profileData.profilePicture);
         }
-
-        // Pobieranie znajomych użytkownika
-        const friendsRef = collection(
-          db,
-          "friends",
-          currentUser.uid,
-          "userFriends"
-        );
-        const friendsSnapshot = await getDocs(friendsRef);
-        const friendsData = friendsSnapshot.docs.map((doc) => doc.id); // Zakładając, że znajomi są przechowywani przez ID użytkownika
-        setFriends(friendsData);
 
         const notificationsRef = collection(
           db,
@@ -114,15 +102,11 @@ const HomePage = () => {
     }
   };
 
-  // Dodano logikę filtrowania postów w oparciu o stan "filter" i "privacy"
+  // Dodano logikę filtrowania postów w oparciu o stan "filter"
   const filteredPosts = posts.filter((post) => {
     if (filter === "all") return true; // Jeśli filtr jest "all", pokaż wszystkie posty
-    if (filter === "friends" && post.privacy === "friends") {
-      // Jeśli filtr jest "friends", sprawdź, czy użytkownik jest znajomym autora posta
-      return friends.includes(post.userId);
-    }
-    if (filter === "public" && post.privacy === "public") return true; // Jeśli filtr jest "public", pokaż tylko publiczne posty
-    return false;
+    if (filter === "friends") return post.userId && post.userId !== user.uid; // Jeśli filtr jest "friends", pokaż tylko posty od znajomych
+    return true;
   });
 
   useEffect(() => {
@@ -138,13 +122,7 @@ const HomePage = () => {
     }
   }, [posts, highlightedPostId]);
 
-  const handleSubmitPost = async (
-    content,
-    imageUrl,
-    videoUrl,
-    audioUrl,
-    privacy
-  ) => {
+  const handleSubmitPost = async (content, imageUrl, videoUrl, audioUrl) => {
     if (!user) return;
 
     try {
@@ -166,7 +144,6 @@ const HomePage = () => {
         userId: user.uid,
         profilePicture: profilePicture || null,
         likes: [],
-        privacy: privacy || "public", // Dodajemy opcję prywatności
       });
 
       fetchPosts();
@@ -297,6 +274,8 @@ const HomePage = () => {
         <main className="w-5/6 p-4">
           {user && (
             <div className="w-full flex flex-col items-center mb-4">
+              {" "}
+              {/* Kontener wyrównujący */}
               <FilterPosts currentFilter={filter} setFilter={setFilter} />
               <PostForm
                 user={user}
@@ -306,6 +285,7 @@ const HomePage = () => {
             </div>
           )}
           <div className="space-y-6">
+            {/* Użycie "filteredPosts" zamiast "posts" do wyświetlania przefiltrowanych postów */}
             {filteredPosts.map((post) => (
               <div id={post.id} key={post.id}>
                 <PostItem
@@ -323,6 +303,7 @@ const HomePage = () => {
           </div>
         </main>
       </div>
+
       <ScrollToTopButton />
     </div>
   );
