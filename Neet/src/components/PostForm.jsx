@@ -13,6 +13,7 @@ const PostForm = ({ handleSubmitPost }) => {
     videoPreviews: [],
     audio: [],
     audioPreviews: [],
+    privacy: "public", // Domyślnie publiczny
   });
   const [uploading, setUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -177,7 +178,8 @@ const PostForm = ({ handleSubmitPost }) => {
       newPost.content,
       uploadedImageUrls,
       uploadedVideoUrls,
-      uploadedAudioUrls
+      uploadedAudioUrls,
+      newPost.privacy // Przekazanie ustawienia prywatności
     );
     setUploading(false);
     setNewPost({
@@ -188,6 +190,7 @@ const PostForm = ({ handleSubmitPost }) => {
       videoPreviews: [],
       audio: [],
       audioPreviews: [],
+      privacy: "public", // Resetowanie domyślnej opcji prywatności
     });
     setIsFormOpen(false);
   };
@@ -282,6 +285,39 @@ const PostForm = ({ handleSubmitPost }) => {
                 <EmojiPicker onEmojiClick={handleEmojiClick} />
               </div>
             )}
+          </div>
+
+          <div className="mt-4">
+            <label className="text-white">Prywatność:</label>
+            <div className="flex mt-2">
+              {/* Publiczny Post Button */}
+              <button
+                type="button"
+                onClick={() =>
+                  setNewPost((prev) => ({ ...prev, privacy: "public" }))
+                }
+                className={`p-3 rounded-full ${
+                  newPost.privacy === "public" ? "bg-blue-500" : "bg-gray-700"
+                } text-white flex items-center space-x-2`}
+              >
+                <i className="fa-solid fa-earth-americas"></i>
+                <span>Publiczny</span>
+              </button>
+
+              {/* Tylko dla znajomych Button */}
+              <button
+                type="button"
+                onClick={() =>
+                  setNewPost((prev) => ({ ...prev, privacy: "friends" }))
+                }
+                className={`p-3 rounded-full ${
+                  newPost.privacy === "friends" ? "bg-green-500" : "bg-gray-700"
+                } text-white flex items-center space-x-2 ml-4`}
+              >
+                <i className="fa-solid fa-users"></i>
+                <span>Tylko dla znajomych</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 mt-2">
