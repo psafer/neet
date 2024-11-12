@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PropTypes from "prop-types";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig"; // Import Firebase configuration
+import { db } from "../firebaseConfig";
 
 const PostItem = ({
   post,
@@ -14,6 +14,8 @@ const PostItem = ({
   newComment,
   handleAddComment,
   handleDeletePost,
+  authorName, // Dodajemy `authorName` jako prop
+  authorProfilePicture, // Dodajemy `authorProfilePicture` jako prop
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCommentForm, setShowCommentForm] = useState(false);
@@ -67,12 +69,14 @@ const PostItem = ({
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl border border-gray-600 relative">
       <div className="flex items-center mb-4 relative">
-        {post.profilePicture && (
+        {authorProfilePicture ? (
           <img
-            src={post.profilePicture}
+            src={authorProfilePicture} // Użycie zaktualizowanego zdjęcia profilowego
             alt="Author"
             className="w-9 h-9 rounded-full mr-2 mb-2"
           />
+        ) : (
+          <p className="text-gray-400">Brak zdjęcia profilowego</p>
         )}
 
         <div className="relative flex items-center">
@@ -80,7 +84,7 @@ const PostItem = ({
             className="text-lg font-semibold text-white cursor-pointer"
             onClick={toggleDropdown}
           >
-            {post.author || "Anonim"}
+            {authorName || "Anonim"} {/* Użycie przekazanego `authorName` */}
           </p>
 
           {isFollowing && (
@@ -114,7 +118,6 @@ const PostItem = ({
       <div className="p-4 border border-gray-600 rounded-lg">
         <p className="text-gray-300">{post.content}</p>
 
-        {/* Obsługa obrazków */}
         {post.imageUrl && post.imageUrl.length > 0 && (
           <div className="relative mt-4">
             <img
@@ -141,7 +144,6 @@ const PostItem = ({
           </div>
         )}
 
-        {/* Obsługa wideo */}
         {post.videoUrl && post.videoUrl.length > 0 && (
           <div className="relative mt-4">
             {post.videoUrl.map((video, index) => (
@@ -155,7 +157,6 @@ const PostItem = ({
           </div>
         )}
 
-        {/* Obsługa audio */}
         {post.audioUrl && post.audioUrl.length > 0 && (
           <div className="relative mt-4">
             {post.audioUrl.map((audio, index) => (
@@ -204,7 +205,6 @@ const PostItem = ({
           </div>
         </div>
 
-        {/* Sekcja komentarzy */}
         {showCommentForm && (
           <CommentSection
             post={post}
@@ -219,21 +219,18 @@ const PostItem = ({
   );
 };
 
-// Dodaj walidację `props` za pomocą PropTypes
 PostItem.propTypes = {
   post: PropTypes.shape({
     id: PropTypes.string.isRequired,
     profilePicture: PropTypes.string,
     userId: PropTypes.string.isRequired,
-    author: PropTypes.string,
     content: PropTypes.string.isRequired,
     imageUrl: PropTypes.arrayOf(PropTypes.string),
     videoUrl: PropTypes.arrayOf(PropTypes.string),
-    audioUrl: PropTypes.arrayOf(PropTypes.string), // Dodano pole audio
+    audioUrl: PropTypes.arrayOf(PropTypes.string),
     comments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,
-        author: PropTypes.string,
         content: PropTypes.string,
         date: PropTypes.object,
       })
@@ -244,6 +241,8 @@ PostItem.propTypes = {
   user: PropTypes.shape({
     uid: PropTypes.string.isRequired,
   }),
+  authorName: PropTypes.string,
+  authorProfilePicture: PropTypes.string, // Dodany prop do zdjęcia profilowego
   handleLike: PropTypes.func.isRequired,
   handleCommentChange: PropTypes.func.isRequired,
   newComment: PropTypes.object.isRequired,
