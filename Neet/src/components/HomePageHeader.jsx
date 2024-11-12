@@ -113,16 +113,20 @@ const HomePageHeader = () => {
     if (searchTerm.length > 1) {
       const usersRef = collection(db, "profiles");
       const q = query(usersRef, orderBy("firstName"));
-      const querySnapshot = await getDocs(q);
+      try {
+        const querySnapshot = await getDocs(q);
 
-      const filteredResults = querySnapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((user) => {
-          const fullName = `${user.firstName.toLowerCase()} ${user.lastName.toLowerCase()}`;
-          return fullName.includes(searchTerm.toLowerCase());
-        });
+        const filteredResults = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((user) => {
+            const fullName = `${user.firstName.toLowerCase()} ${user.lastName.toLowerCase()}`;
+            return fullName.includes(searchTerm.toLowerCase());
+          });
 
-      setSearchResults(filteredResults);
+        setSearchResults(filteredResults);
+      } catch (error) {
+        console.error("Błąd podczas pobierania wyników wyszukiwania:", error);
+      }
     } else {
       setSearchResults([]);
     }
@@ -142,7 +146,7 @@ const HomePageHeader = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsMobileSearchOpen(false); // Zamknięcie wyszukiwarki po kliknięciu poza nią
+        setIsMobileSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -203,7 +207,7 @@ const HomePageHeader = () => {
             </div>
 
             {/* Search Results */}
-            {searchQuery && isMobileSearchOpen && (
+            {searchQuery && (
               <ul
                 ref={searchRef}
                 className="absolute bg-gray-800 text-white w-full max-h-60 overflow-y-auto rounded-lg shadow-lg z-50 mt-2"
