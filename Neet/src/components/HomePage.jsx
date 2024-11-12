@@ -74,7 +74,6 @@ const HomePage = () => {
     return () => unsubscribe();
   }, [unreadCount]);
 
-  // Funkcja pobierająca wszystkie profile użytkowników
   const fetchProfiles = async () => {
     const profilesCollection = collection(db, "profiles");
     const profilesSnapshot = await getDocs(profilesCollection);
@@ -85,7 +84,6 @@ const HomePage = () => {
     setProfiles(profilesData);
   };
 
-  // Funkcja pobierająca posty
   const fetchPosts = async () => {
     try {
       const postsCollection = collection(db, "posts");
@@ -102,7 +100,6 @@ const HomePage = () => {
     }
   };
 
-  // Funkcja zwracająca dane autora na podstawie userId
   const getAuthorInfo = (userId) => {
     const authorData = profiles[userId];
     if (authorData) {
@@ -151,7 +148,7 @@ const HomePage = () => {
         likes: [],
       });
 
-      fetchPosts();
+      fetchPosts(); // Pobranie nowych postów po dodaniu
       alert("Post został dodany pomyślnie!");
     } catch (error) {
       console.error("Błąd podczas dodawania posta:", error);
@@ -163,7 +160,7 @@ const HomePage = () => {
 
     try {
       await deleteDoc(doc(db, "posts", postId));
-      fetchPosts();
+      fetchPosts(); // Pobranie nowych postów po usunięciu
       alert("Post został usunięty");
     } catch (error) {
       console.error("Błąd podczas usuwania posta:", error);
