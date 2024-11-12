@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { auth, db, storage } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 
@@ -61,6 +69,21 @@ const ProfilePage = () => {
     return getDownloadURL(storageRef);
   };
 
+  const updatePostsAuthorName = async (userId, firstName, lastName) => {
+    // Pobieramy wszystkie posty tego użytkownika
+    const postsCollection = collection(db, "posts");
+    const postsQuery = query(postsCollection, where("userId", "==", userId));
+    const postsSnapshot = await getDocs(postsQuery);
+
+    const authorName = `${firstName} ${lastName}`;
+
+    // Aktualizujemy każdy post tego użytkownika
+    for (const postDoc of postsSnapshot.docs) {
+      const postRef = postDoc.ref;
+      await updateDoc(postRef, { authorName });
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
 
@@ -75,6 +98,13 @@ const ProfilePage = () => {
         ...formData,
         profilePicture: profilePictureURL,
       });
+
+      // Wywołaj updatePostsAuthorName po zapisaniu profilu
+      await updatePostsAuthorName(
+        user.uid,
+        formData.firstName,
+        formData.lastName
+      );
 
       setEditing(false);
       window.location.reload();
@@ -103,6 +133,7 @@ const ProfilePage = () => {
           <div className="flex flex-col items-center">
             {editing ? (
               <form onSubmit={handleSave} className="w-full">
+                {/* Fields for editing profile information */}
                 <div className="mb-4">
                   <label
                     htmlFor="firstName"

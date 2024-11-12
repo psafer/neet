@@ -28,13 +28,13 @@ const HomePage = () => {
   const [newComment, setNewComment] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState("all");
-  const [profiles, setProfiles] = useState({}); // Nowy stan przechowujący dane profili użytkowników
+  const [profiles, setProfiles] = useState({});
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
   useEffect(() => {
     fetchPosts();
-    fetchProfiles(); // Pobranie wszystkich profili przy uruchomieniu
+    fetchProfiles();
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -102,16 +102,21 @@ const HomePage = () => {
     }
   };
 
-  // Funkcja zwracająca imię i nazwisko autora na podstawie userId
-  const getAuthorName = (userId) => {
+  // Funkcja zwracająca dane autora na podstawie userId
+  const getAuthorInfo = (userId) => {
     const authorData = profiles[userId];
     if (authorData) {
-      return `${authorData.firstName} ${authorData.lastName}`;
+      return {
+        name: `${authorData.firstName} ${authorData.lastName}`,
+        profilePicture: authorData.profilePicture || null,
+      };
     }
-    return "Nieznany Użytkownik";
+    return {
+      name: "Nieznany Użytkownik",
+      profilePicture: null,
+    };
   };
 
-  // Filtr postów w zależności od ustawionego filtra
   const filteredPosts = posts.filter((post) => {
     if (filter === "all") return true;
     if (filter === "friends") return post.userId && post.userId !== user.uid;
@@ -141,7 +146,7 @@ const HomePage = () => {
         videoUrl: videoUrl || null,
         audioUrl: audioUrl || null,
         date: serverTimestamp(),
-        userId: user.uid, // Tylko userId, bez pełnych danych autora
+        userId: user.uid,
         profilePicture: profilePicture || null,
         likes: [],
       });
@@ -283,21 +288,25 @@ const HomePage = () => {
             </div>
           )}
           <div className="space-y-6">
-            {filteredPosts.map((post) => (
-              <div id={post.id} key={post.id}>
-                <PostItem
-                  post={post}
-                  user={user}
-                  authorName={getAuthorName(post.userId)}
-                  handleLike={handleLike}
-                  handleCommentChange={handleCommentChange}
-                  newComment={newComment}
-                  handleAddComment={handleAddComment}
-                  handleDeletePost={handleDeletePost}
-                  handleEditPost={handleEditPost}
-                />
-              </div>
-            ))}
+            {filteredPosts.map((post) => {
+              const { name, profilePicture } = getAuthorInfo(post.userId);
+              return (
+                <div id={post.id} key={post.id}>
+                  <PostItem
+                    post={post}
+                    user={user}
+                    authorName={name}
+                    authorProfilePicture={profilePicture} // Przekazanie zdjęcia profilowego
+                    handleLike={handleLike}
+                    handleCommentChange={handleCommentChange}
+                    newComment={newComment}
+                    handleAddComment={handleAddComment}
+                    handleDeletePost={handleDeletePost}
+                    handleEditPost={handleEditPost}
+                  />
+                </div>
+              );
+            })}
           </div>
         </main>
       </div>
