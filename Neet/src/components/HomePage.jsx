@@ -19,20 +19,22 @@ import PostForm from "./PostForm";
 import PostItem from "./PostItem";
 import { useLocation } from "react-router-dom";
 import ScrollToTopButton from "./ScrollToTopButton";
-import FilterPosts from "./FilterPosts"; // Import komponentu filtrowania
+import FilterPosts from "./FilterPosts";
 
 const HomePage = () => {
-  const [posts, setPosts] = useState([]); // Wszystkie posty
-  const [user, setUser] = useState(null); // Aktualnie zalogowany użytkownik
+  const [posts, setPosts] = useState([]);
+  const [user, setUser] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
   const [newComment, setNewComment] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
-  const [filter, setFilter] = useState("all"); // Dodany stan filtra, domyślnie ustawiony na "all" (wszystkie posty)
+  const [filter, setFilter] = useState("all");
+  const [profiles, setProfiles] = useState({}); // Nowy stan przechowujący dane profili użytkowników
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
   useEffect(() => {
     fetchPosts();
+    fetchProfiles(); // Pobranie wszystkich profili przy uruchomieniu
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -72,29 +74,27 @@ const HomePage = () => {
     return () => unsubscribe();
   }, [unreadCount]);
 
+  // Funkcja pobierająca wszystkie profile użytkowników
+  const fetchProfiles = async () => {
+    const profilesCollection = collection(db, "profiles");
+    const profilesSnapshot = await getDocs(profilesCollection);
+    const profilesData = {};
+    profilesSnapshot.forEach((doc) => {
+      profilesData[doc.id] = doc.data();
+    });
+    setProfiles(profilesData);
+  };
+
+  // Funkcja pobierająca posty
   const fetchPosts = async () => {
     try {
       const postsCollection = collection(db, "posts");
       const q = query(postsCollection, orderBy("date", "desc"));
       const postsSnapshot = await getDocs(q);
-      const postsData = await Promise.all(
-        postsSnapshot.docs.map(async (doc) => {
-          const postData = doc.data();
-          const commentsRef = collection(db, "posts", doc.id, "comments");
-          const commentsSnapshot = await getDocs(
-            query(commentsRef, orderBy("date", "asc"))
-          );
-          const commentsData = commentsSnapshot.docs.map((commentDoc) => ({
-            ...commentDoc.data(),
-            id: commentDoc.id,
-          }));
-          return {
-            ...postData,
-            id: doc.id,
-            comments: commentsData,
-          };
-        })
-      );
+      const postsData = postsSnapshot.docs.map((postDoc) => ({
+        ...postDoc.data(),
+        id: postDoc.id,
+      }));
 
       setPosts(postsData);
     } catch (error) {
@@ -102,10 +102,19 @@ const HomePage = () => {
     }
   };
 
-  // Dodano logikę filtrowania postów w oparciu o stan "filter"
+  // Funkcja zwracająca imię i nazwisko autora na podstawie userId
+  const getAuthorName = (userId) => {
+    const authorData = profiles[userId];
+    if (authorData) {
+      return `${authorData.firstName} ${authorData.lastName}`;
+    }
+    return "Nieznany Użytkownik";
+  };
+
+  // Filtr postów w zależności od ustawionego filtra
   const filteredPosts = posts.filter((post) => {
-    if (filter === "all") return true; // Jeśli filtr jest "all", pokaż wszystkie posty
-    if (filter === "friends") return post.userId && post.userId !== user.uid; // Jeśli filtr jest "friends", pokaż tylko posty od znajomych
+    if (filter === "all") return true;
+    if (filter === "friends") return post.userId && post.userId !== user.uid;
     return true;
   });
 
@@ -126,22 +135,13 @@ const HomePage = () => {
     if (!user) return;
 
     try {
-      const docRef = doc(db, "profiles", user.uid);
-      const docSnap = await getDoc(docRef);
-      let authorName = "Anonim";
-      if (docSnap.exists()) {
-        const profileData = docSnap.data();
-        authorName = `${profileData.firstName} ${profileData.lastName}`;
-      }
-
       await addDoc(collection(db, "posts"), {
         content,
         imageUrl: imageUrl || null,
         videoUrl: videoUrl || null,
         audioUrl: audioUrl || null,
-        author: authorName,
         date: serverTimestamp(),
-        userId: user.uid,
+        userId: user.uid, // Tylko userId, bez pełnych danych autora
         profilePicture: profilePicture || null,
         likes: [],
       });
@@ -274,8 +274,6 @@ const HomePage = () => {
         <main className="w-5/6 p-4">
           {user && (
             <div className="w-full flex flex-col items-center mb-4">
-              {" "}
-              {/* Kontener wyrównujący */}
               <FilterPosts currentFilter={filter} setFilter={setFilter} />
               <PostForm
                 user={user}
@@ -285,12 +283,12 @@ const HomePage = () => {
             </div>
           )}
           <div className="space-y-6">
-            {/* Użycie "filteredPosts" zamiast "posts" do wyświetlania przefiltrowanych postów */}
             {filteredPosts.map((post) => (
               <div id={post.id} key={post.id}>
                 <PostItem
                   post={post}
                   user={user}
+                  authorName={getAuthorName(post.userId)}
                   handleLike={handleLike}
                   handleCommentChange={handleCommentChange}
                   newComment={newComment}
@@ -303,7 +301,6 @@ const HomePage = () => {
           </div>
         </main>
       </div>
-
       <ScrollToTopButton />
     </div>
   );
