@@ -242,7 +242,7 @@ PostItem.propTypes = {
     uid: PropTypes.string.isRequired,
   }),
   authorName: PropTypes.string,
-  authorProfilePicture: PropTypes.string, // Dodany prop do zdjęcia profilowego
+  authorProfilePicture: PropTypes.string,
   handleLike: PropTypes.func.isRequired,
   handleCommentChange: PropTypes.func.isRequired,
   newComment: PropTypes.object.isRequired,
