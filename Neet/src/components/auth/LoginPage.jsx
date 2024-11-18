@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth, db } from "../firebaseConfig"; // Pamiętaj o imporcie db dla Firestore
+import { auth, db } from "../../firebaseConfig"; // Pamiętaj o imporcie db dla Firestore
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,

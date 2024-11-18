@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import PropTypes from "prop-types";
-import { storage } from "../firebaseConfig";
+import { storage } from "../../firebaseConfig";
 
 const PostForm = ({ handleSubmitPost }) => {
   const [newPost, setNewPost] = useState({

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { db, auth } from "../firebaseConfig";
+import { db, auth } from "../../firebaseConfig";
 import {
   collection,
   doc,
@@ -18,7 +18,7 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { format } from "date-fns";
-import FriendsList from "./FriendsList";
+import FriendsList from "../shared/FriendsList";
 import debounce from "lodash/debounce";
 
 const HomePageHeader = () => {
