@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PropTypes from "prop-types";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { db } from "../../firebaseConfig";
 
 const PostItem = ({
   post,

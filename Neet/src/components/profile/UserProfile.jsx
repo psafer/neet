@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { db, auth } from "../firebaseConfig"; // Import auth for current user
+import { db, auth } from "../../firebaseConfig"; // Import auth for current user
 import {
   collection,
   query,
@@ -13,7 +13,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { format } from "date-fns";
-import HomePageHeader from "./HomePageHeader";
+import HomePageHeader from "../header/HomePageHeader";
 
 const UserProfile = () => {
   const { userId } = useParams(); // Get userId from URL

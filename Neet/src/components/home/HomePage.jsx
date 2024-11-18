@@ -13,14 +13,14 @@ import {
 } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "../firebaseConfig";
-import HomePageHeader from "./HomePageHeader";
-import PostForm from "./PostForm";
-import PostItem from "./PostItem";
+import { db, auth } from "../../firebaseConfig";
+import HomePageHeader from "../header/HomePageHeader";
+import PostForm from "../posts/PostForm";
+import PostItem from "../posts/PostItem";
 import { useLocation } from "react-router-dom";
 import ScrollToTopButton from "./ScrollToTopButton";
 import FilterPosts from "./FilterPosts";
-import ChatPanel from "./ChatPanel"; // Import ChatPanel
+//import ChatPanel from "../chatComponents/ChatPanel"; // Import ChatPanel
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -30,11 +30,15 @@ const HomePage = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState("all");
   const [profiles, setProfiles] = useState({});
-  const [isChatOpen, setIsChatOpen] = useState(false); // Dodanie stanu czatu
+  {
+    /*const [isChatOpen, setIsChatOpen] = useState(false); // Dodanie stanu czatu*/
+  }
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
-  const toggleChat = () => setIsChatOpen((prev) => !prev); // Funkcja do przełączania stanu czatu
+  {
+    /*const toggleChat = () => setIsChatOpen((prev) => !prev); // Funkcja do przełączania stanu czatu*/
+  }
 
   useEffect(() => {
     fetchPosts();
@@ -311,7 +315,7 @@ const HomePage = () => {
           </div>
         </main>
       </div>
-      <ChatPanel isOpen={isChatOpen} toggleChat={toggleChat} />{" "}
+      {/*<ChatPanel isOpen={isChatOpen} toggleChat={toggleChat} />{" "}*/}
       {/* Wstawienie ChatPanel */}
       <ScrollToTopButton />
     </div>

@@ -3,7 +3,12 @@ import { format } from "date-fns";
 import PropTypes from "prop-types";
 import EmojiPicker from "emoji-picker-react";
 
-const CommentSection = ({ post, newComment, handleCommentChange, handleAddComment }) => {
+const CommentSection = ({
+  post,
+  newComment,
+  handleCommentChange,
+  handleAddComment,
+}) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Stan dla Emoji Picker
   const [showAllComments, setShowAllComments] = useState(false); // Kontrola widoczności wszystkich komentarzy
   const emojiPickerRef = useRef(null); // Referencja dla Emoji Picker
@@ -31,7 +36,9 @@ const CommentSection = ({ post, newComment, handleCommentChange, handleAddCommen
   // Obsługa dodawania emoji
   const handleEmojiClick = (emojiData) => {
     const emoji = emojiData.emoji;
-    handleCommentChange(post.id, { target: { value: (newComment[post.id] || "") + emoji } });
+    handleCommentChange(post.id, {
+      target: { value: (newComment[post.id] || "") + emoji },
+    });
   };
 
   // Obsługa dodawania komentarza po naciśnięciu Enter
@@ -62,7 +69,10 @@ const CommentSection = ({ post, newComment, handleCommentChange, handleAddCommen
           onKeyDown={handleKeyDown} // Obsługa naciśnięcia klawisza Enter
           className="flex-grow p-2 bg-gray-700 text-white rounded"
         />
-        <button onClick={() => handleAddComment(post.id)} className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2">
+        <button
+          onClick={() => handleAddComment(post.id)}
+          className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2"
+        >
           <i className="fa-solid fa-paper-plane"></i>
         </button>
         {/* Przycisk dodawania Emoji */}
@@ -78,7 +88,12 @@ const CommentSection = ({ post, newComment, handleCommentChange, handleAddCommen
         {showEmojiPicker && (
           <div
             ref={emojiPickerRef}
-            style={{ position: 'absolute', zIndex: 100, bottom: '50px', right: '0' }}
+            style={{
+              position: "absolute",
+              zIndex: 100,
+              bottom: "50px",
+              right: "0",
+            }}
           >
             <EmojiPicker onEmojiClick={handleEmojiClick} />
           </div>
@@ -87,12 +102,20 @@ const CommentSection = ({ post, newComment, handleCommentChange, handleAddCommen
 
       {/* Wyświetlanie komentarzy */}
       {post.comments.length > 0 && (
-        <div className={`mt-4 ${showAllComments ? 'max-h-52 overflow-y-auto' : ''}`}> {/* Przewijana lista komentarzy */}
+        <div
+          className={`mt-4 ${
+            showAllComments ? "max-h-52 overflow-y-auto" : ""
+          }`}
+        >
+          {" "}
+          {/* Przewijana lista komentarzy */}
           {commentsToDisplay.map((comment) => (
             <div key={comment.id} className="text-gray-300 mb-2">
               <strong>{comment.author}:</strong> {comment.content}
               <span className="text-gray-500 text-sm ml-2">
-                {comment.date ? format(comment.date.toDate(), "dd.MM.yyyy, HH:mm") : ""}
+                {comment.date
+                  ? format(comment.date.toDate(), "dd.MM.yyyy, HH:mm")
+                  : ""}
               </span>
             </div>
           ))}
@@ -105,7 +128,7 @@ const CommentSection = ({ post, newComment, handleCommentChange, handleAddCommen
           onClick={toggleShowComments}
           className="text-orange-500 hover:underline mt-2"
         >
-          {showAllComments ? 'Pokaż mniej' : 'Pokaż więcej'}
+          {showAllComments ? "Pokaż mniej" : "Pokaż więcej"}
         </button>
       )}
     </div>
