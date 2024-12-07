@@ -2,6 +2,7 @@ import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig";
 import PropTypes from "prop-types";
+import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
 const MessageInput = ({ conversationId }) => {
   const [message, setMessage] = useState("");
@@ -54,13 +55,13 @@ const MessageInput = ({ conversationId }) => {
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder="Napisz wiadomość..."
-        className="flex-1 bg-gray-800 text-white px-4 py-2 rounded-l-lg outline-none"
+        className="flex-1 bg-gray-800 text-white px-1 py-2 rounded-l-lg outline-none"
       />
       <button
         onClick={handleSendMessage}
-        className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 transition"
+        className="bg-blue-500 text-white px-3 py-2 rounded-r-lg hover:bg-blue-600 transition"
       >
-        Wyślij
+        <PaperAirplaneIcon className="w-5 h-6 transfrom -rotate-45"></PaperAirplaneIcon>
       </button>
     </div>
   );
