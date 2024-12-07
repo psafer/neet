@@ -3,8 +3,15 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PropTypes from "prop-types";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore";
 import { db } from "../../firebaseConfig";
+import { orderBy } from "lodash";
 
 const PostItem = ({
   post,
@@ -14,14 +21,16 @@ const PostItem = ({
   newComment,
   handleAddComment,
   handleDeletePost,
-  authorName, // Dodajemy `authorName` jako prop
-  authorProfilePicture, // Dodajemy `authorProfilePicture` jako prop
+  authorName,
+  authorProfilePicture,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [comments, setComments] = useState([]); // Nowy stan dla komentarzy
 
+  // Pobieranie statusu obserwacji użytkownika
   useEffect(() => {
     const checkFollowingStatus = async () => {
       if (user) {
@@ -38,6 +47,22 @@ const PostItem = ({
 
     checkFollowingStatus();
   }, [user, post.userId]);
+
+  // Pobieranie komentarzy w czasie rzeczywistym
+  useEffect(() => {
+    const commentsRef = collection(db, "posts", post.id, "comments");
+    const q = query(commentsRef, orderBy("date", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedComments = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setComments(fetchedComments);
+    });
+
+    return () => unsubscribe();
+  }, [post.id]);
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) =>
@@ -71,7 +96,7 @@ const PostItem = ({
       <div className="flex items-center mb-4 relative">
         {authorProfilePicture ? (
           <img
-            src={authorProfilePicture} // Użycie zaktualizowanego zdjęcia profilowego
+            src={authorProfilePicture}
             alt="Author"
             className="w-9 h-9 rounded-full mr-2 mb-2"
           />
@@ -84,7 +109,7 @@ const PostItem = ({
             className="text-lg font-semibold text-white cursor-pointer"
             onClick={toggleDropdown}
           >
-            {authorName || "Anonim"} {/* Użycie przekazanego `authorName` */}
+            {authorName || "Anonim"}
           </p>
 
           {isFollowing && (
@@ -123,7 +148,7 @@ const PostItem = ({
             <img
               src={post.imageUrl[currentImageIndex]}
               alt={`Post Image ${currentImageIndex + 1}`}
-              className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
+              className="w-auto h-64 object-contain rounded-lg mx-auto"
             />
             {post.imageUrl.length > 1 && (
               <>
@@ -141,32 +166,6 @@ const PostItem = ({
                 </button>
               </>
             )}
-          </div>
-        )}
-
-        {post.videoUrl && post.videoUrl.length > 0 && (
-          <div className="relative mt-4">
-            {post.videoUrl.map((video, index) => (
-              <video
-                key={index}
-                src={video}
-                controls
-                className="w-full h-64 object-contain rounded-lg mx-auto"
-              />
-            ))}
-          </div>
-        )}
-
-        {post.audioUrl && post.audioUrl.length > 0 && (
-          <div className="relative mt-4">
-            {post.audioUrl.map((audio, index) => (
-              <audio
-                key={index}
-                src={audio}
-                controls
-                className="w-full rounded-lg mx-auto"
-              />
-            ))}
           </div>
         )}
 
@@ -194,7 +193,7 @@ const PostItem = ({
               className="flex items-center text-sm text-gray-500 ml-4"
             >
               <i className="fa-solid fa-comment mr-1"></i>
-              {post.comments?.length || 0}
+              {comments.length}
             </button>
           </div>
           <div className="mt-2 text-sm text-gray-500">
@@ -207,8 +206,7 @@ const PostItem = ({
 
         {showCommentForm && (
           <CommentSection
-            post={post}
-            user={user}
+            post={{ ...post, comments }}
             newComment={newComment}
             handleCommentChange={handleCommentChange}
             handleAddComment={handleAddComment}
@@ -222,19 +220,10 @@ const PostItem = ({
 PostItem.propTypes = {
   post: PropTypes.shape({
     id: PropTypes.string.isRequired,
-    profilePicture: PropTypes.string,
     userId: PropTypes.string.isRequired,
     content: PropTypes.string.isRequired,
     imageUrl: PropTypes.arrayOf(PropTypes.string),
-    videoUrl: PropTypes.arrayOf(PropTypes.string),
-    audioUrl: PropTypes.arrayOf(PropTypes.string),
-    comments: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string,
-        content: PropTypes.string,
-        date: PropTypes.object,
-      })
-    ),
+    comments: PropTypes.array,
     likes: PropTypes.arrayOf(PropTypes.string).isRequired,
     date: PropTypes.object,
   }).isRequired,

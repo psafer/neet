@@ -16,6 +16,7 @@ import MessageInput from "./MessageInput";
 const ChatPanel = () => {
   const [friends, setFriends] = useState([]); // Lista znajomych
   const [activeConversationId, setActiveConversationId] = useState(null); // Aktywna konwersacja
+  const [activeFriendId, setActiveFriendId] = useState(null); // Id aktywnego znajomego
   const [isExpanded, setIsExpanded] = useState(false); // Stan rozwinięcia panelu
 
   useEffect(() => {
@@ -65,7 +66,7 @@ const ChatPanel = () => {
   };
 
   const openConversation = async (friend) => {
-    // Sprawdź, czy istnieje już konwersacja między użytkownikami
+    setActiveFriendId(friend.id); // Ustaw aktywnego znajomego
     const conversationsRef = collection(db, "conversations");
     const q = query(
       conversationsRef,
@@ -115,7 +116,11 @@ const ChatPanel = () => {
                 <div
                   key={friend.id}
                   onClick={() => openConversation(friend)}
-                  className="flex items-center p-2 bg-gray-600 text-white cursor-pointer hover:bg-gray-500"
+                  className={`flex items-center p-2 text-white cursor-pointer rounded ${
+                    activeFriendId === friend.id
+                      ? "bg-gray-800"
+                      : "bg-gray-600 hover:bg-gray-500"
+                  }`}
                 >
                   <img
                     src={friend.profilePicture}
