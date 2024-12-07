@@ -35,3 +35,12 @@
 .scroll-bounce {
   animation: bounce 1s infinite;
 }
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+#root {
+  height: 100%;
+  position: relative;
+}
