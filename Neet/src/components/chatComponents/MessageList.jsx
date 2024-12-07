@@ -1,11 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-} from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig";
 import PropTypes from "prop-types";
 
