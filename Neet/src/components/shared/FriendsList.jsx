@@ -9,10 +9,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom"; // hook do nawigacji
-import {
-  UserIcon,
-  ChatBubbleLeftEllipsisIcon,
-} from "@heroicons/react/24/outline"; // Import z Heroicons v2
+import { UserIcon } from "@heroicons/react/24/outline"; // Import z Heroicons v2
 
 const FriendsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,10 +123,6 @@ const FriendsList = () => {
                   className="text-gray-400 hover:text-white"
                 >
                   <UserIcon className="w-5 h-5" />
-                </button>
-                {/* Ikonka czatu */}
-                <button className="text-gray-400 hover:text-white">
-                  <ChatBubbleLeftEllipsisIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
