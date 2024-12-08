@@ -15,6 +15,8 @@ import MessageInput from "./MessageInput";
 
 const ChatPanel = () => {
   const [friends, setFriends] = useState([]); // Lista znajomych
+  const [filteredFriends, setFilteredFriends] = useState([]); // Filtrowana lista znajomych
+  const [searchTerm, setSearchTerm] = useState(""); // Wyszukiwany tekst
   const [activeConversationId, setActiveConversationId] = useState(null); // Aktywna konwersacja
   const [activeFriendId, setActiveFriendId] = useState(null); // Id aktywnego znajomego
   const [isExpanded, setIsExpanded] = useState(false); // Stan rozwinięcia panelu
@@ -52,7 +54,9 @@ const ChatPanel = () => {
           })
         );
 
-        setFriends(friendsData.filter((friend) => friend !== null));
+        const filtered = friendsData.filter((friend) => friend !== null);
+        setFriends(filtered);
+        setFilteredFriends(filtered);
       });
 
       return () => unsubscribe();
@@ -95,10 +99,18 @@ const ChatPanel = () => {
     return () => unsubscribe();
   };
 
+  const handleSearchChange = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    setFilteredFriends(
+      friends.filter((friend) => friend.name.toLowerCase().includes(term))
+    );
+  };
+
   return (
     <div
       className={`fixed bottom-0 right-0 ${
-        isExpanded ? "w-full sm:w-96 h-[70vh]" : "w-36 h-10"
+        isExpanded ? "w-full sm:w-[540px] h-[70vh]" : "w-36 h-10"
       } bg-gray-800 shadow-lg transition-all duration-300 z-50`}
     >
       {/* Nagłówek - zawsze widoczny */}
@@ -109,10 +121,24 @@ const ChatPanel = () => {
       {isExpanded && (
         <div className="flex h-[calc(100%-3rem)]">
           {/* Lista znajomych */}
-          <div className="w-1/3 bg-gray-700 p-2 overflow-y-auto border-r-2 border-slate-800">
+          <div className="w-1/3 bg-gray-700 p-2 overflow-y-auto border-r-2 border-slate-800 relative">
             <h3 className="text-white font-bold mb-2">Znajomi</h3>
-            {friends.length > 0 ? (
-              friends.map((friend) => (
+            {/* Wyszukiwarka znajomych */}
+            <div className="relative mb-2">
+              <input
+                type="text"
+                placeholder="Szukaj..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="w-full p-2 pl-10 rounded bg-gray-600 text-white"
+              />
+              {/* Ikona lupki */}
+              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <i className="fas fa-search"></i>
+              </span>
+            </div>
+            {filteredFriends.length > 0 ? (
+              filteredFriends.map((friend) => (
                 <div
                   key={friend.id}
                   onClick={() => openConversation(friend)}
@@ -131,7 +157,7 @@ const ChatPanel = () => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-400">Brak znajomych</p>
+              <p className="text-gray-400">Brak wyników</p>
             )}
           </div>
 
