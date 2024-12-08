@@ -12,6 +12,7 @@ import { db, auth } from "../../firebaseConfig";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
+import Status from "../shared/Status"; // Importujemy komponent Status
 
 const ChatPanel = () => {
   const [friends, setFriends] = useState([]); // Lista znajomych
@@ -111,7 +112,7 @@ const ChatPanel = () => {
     <div
       className={`fixed bottom-0 right-0 ${
         isExpanded ? "w-full sm:w-[540px] h-[70vh]" : "w-36 h-10"
-      } bg-gray-800 shadow-lg transition-all duration-300 z-50 $`}
+      } bg-gray-800 shadow-lg transition-all duration-300 z-50`}
     >
       {/* Nagłówek - zawsze widoczny */}
       <div className="h-12 bg-gray-900">
@@ -142,18 +143,23 @@ const ChatPanel = () => {
                 <div
                   key={friend.id}
                   onClick={() => openConversation(friend)}
-                  className={`flex items-center p-2 text-white cursor-pointer rounded ${
+                  className={`flex items-center p-2 text-white cursor-pointer rounded relative ${
                     activeFriendId === friend.id
                       ? "bg-gray-800"
                       : "bg-gray-600 hover:bg-gray-500"
                   }`}
                 >
+                  {/* Zdjęcie profilowe */}
                   <img
                     src={friend.profilePicture}
                     alt={`${friend.name} profile`}
                     className="w-8 h-8 rounded-full mr-2"
                   />
                   <p className="text-white text-sm">{friend.name}</p>
+                  {/* Kropka statusu */}
+                  <div className="absolute top-2 right-2">
+                    <Status userId={friend.id} />
+                  </div>
                 </div>
               ))
             ) : (
