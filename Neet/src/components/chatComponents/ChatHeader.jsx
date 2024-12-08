@@ -8,7 +8,11 @@ const ChatHeader = ({ onToggle, isExpanded }) => {
         onClick={onToggle}
         className="text-sm bg-orange-500 px-3 py-1 rounded hover:bg-orange-600"
       >
-        {isExpanded ? "Zamknij" : "Otwórz"}
+        <i
+          className={`fa-solid ${
+            isExpanded ? "fa-chevron-down" : "fa-chevron-up"
+          }`}
+        ></i>
       </button>
     </div>
   );
