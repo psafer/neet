@@ -295,7 +295,7 @@ const PostForm = ({ handleSubmitPost }) => {
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-800"
                 >
                   ×
                 </button>
@@ -311,19 +311,19 @@ const PostForm = ({ handleSubmitPost }) => {
                 <button
                   type="button"
                   onClick={() => handleRemoveVideo(index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-800"
                 >
                   ×
                 </button>
               </div>
             ))}
             {newPost.audioPreviews.map((preview, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative pr-6">
                 <p className="text-white opacity-60">{preview}</p>
                 <button
                   type="button"
                   onClick={() => handleRemoveAudio(index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5  flex items-center justify-center hover:bg-red-800"
                 >
                   ×
                 </button>

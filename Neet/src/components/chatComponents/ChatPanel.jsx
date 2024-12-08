@@ -111,7 +111,7 @@ const ChatPanel = () => {
     <div
       className={`fixed bottom-0 right-0 ${
         isExpanded ? "w-full sm:w-[540px] h-[70vh]" : "w-36 h-10"
-      } bg-gray-800 shadow-lg transition-all duration-300 z-50`}
+      } bg-gray-800 shadow-lg transition-all duration-300 z-50 $`}
     >
       {/* Nagłówek - zawsze widoczny */}
       <div className="h-12 bg-gray-900">
