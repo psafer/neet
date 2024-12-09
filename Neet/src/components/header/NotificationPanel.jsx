@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import {
   collection,
   query,
@@ -12,7 +13,7 @@ import { db } from "../../firebaseConfig";
 
 const NotificationPanel = ({ userId }) => {
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!userId) return;
@@ -31,8 +32,6 @@ const NotificationPanel = ({ userId }) => {
         ...doc.data(),
       }));
       setNotifications(notificationsData);
-      const unread = notificationsData.filter((notif) => !notif.read).length;
-      setUnreadCount(unread);
     });
 
     return () => unsubscribe();
@@ -52,24 +51,40 @@ const NotificationPanel = ({ userId }) => {
     });
     await batch.commit();
     setNotifications([]);
-    setUnreadCount(0);
+  };
+
+  const handleNotificationClick = (postId) => {
+    if (!postId) {
+      alert("PostId jest nieprawidłowy lub nie istnieje.");
+      return;
+    }
+    navigate("/", { state: { highlightedPostId: postId } });
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2">
+    <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2 z-50">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-bold">Powiadomienia</h3>
-        <button className="text-orange-500" onClick={deleteNotifications}>
+        <button
+          className="text-orange-500 hover:text-orange-300"
+          onClick={deleteNotifications}
+        >
           <i className="fa-solid fa-broom"></i>
         </button>
       </div>
       {notifications.length === 0 ? (
         <p className="text-gray-400">Brak powiadomień</p>
       ) : (
-        notifications.map((notif, index) => (
-          <div key={index} className="border-b border-gray-600 py-2">
-            <p>{notif.message}</p>
-            <span className="text-gray-500 text-sm">
+        notifications.map((notif) => (
+          <div
+            key={notif.id}
+            onClick={() => handleNotificationClick(notif.postId)}
+            className="border-b border-gray-600 py-2 px-3 cursor-pointer hover:bg-gray-700 hover:text-orange-300 transition-all rounded"
+            role="button"
+            tabIndex={0}
+          >
+            <p className="text-sm">{notif.message}</p>
+            <span className="text-xs text-gray-400">
               {notif.date ? notif.date.toDate().toLocaleString() : "Brak daty"}
             </span>
           </div>

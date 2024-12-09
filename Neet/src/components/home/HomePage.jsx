@@ -204,7 +204,7 @@ const HomePage = () => {
 
         await addDoc(notificationRef, {
           message: `${userFullName} polubił Twój post`,
-          postId,
+          postId, // Dodanie ID posta
           date: serverTimestamp(),
           read: false,
         });
@@ -250,10 +250,46 @@ const HomePage = () => {
       // Dodanie komentarza do podkolekcji `comments`
       await addDoc(commentsRef, newCommentData);
 
+      // Tworzenie powiadomienia
+      const postRef = doc(db, "posts", postId);
+      const postSnapshot = await getDoc(postRef);
+
+      if (postSnapshot.exists()) {
+        const postData = postSnapshot.data();
+
+        const notificationRef = collection(
+          db,
+          "notifications",
+          postData.userId,
+          "userNotifications"
+        );
+
+        await addDoc(notificationRef, {
+          message: `${authorName} dodał komentarz do Twojego posta`,
+          postId, // Dodanie ID posta
+          date: serverTimestamp(),
+          read: false,
+        });
+      }
+
       setNewComment((prev) => ({ ...prev, [postId]: "" })); // Czyszczenie pola komentarza
       fetchPosts(); // Odświeżenie postów po dodaniu komentarza
     } catch (error) {
       console.error("Błąd podczas dodawania komentarza:", error);
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!user) return; // Sprawdź, czy użytkownik jest zalogowany
+
+    const commentRef = doc(db, "posts", postId, "comments", commentId);
+
+    try {
+      await deleteDoc(commentRef); // Usuń dokument komentarza
+      alert("Komentarz został usunięty");
+      fetchPosts(); // Odśwież posty po usunięciu komentarza
+    } catch (error) {
+      console.error("Błąd podczas usuwania komentarza:", error);
     }
   };
 
@@ -286,6 +322,8 @@ const HomePage = () => {
                     handleCommentChange={handleCommentChange}
                     newComment={newComment}
                     handleAddComment={handleAddComment}
+                    handleDeleteComment={handleDeleteComment} // Dodano przekazanie handleDeleteComment
+                    currentUserId={user?.uid}
                     handleDeletePost={handleDeletePost}
                     handleEditPost={handleEditPost}
                   />

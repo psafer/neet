@@ -9,6 +9,8 @@ const CommentSection = ({
   newComment,
   handleCommentChange,
   handleAddComment,
+  handleDeleteComment,
+  currentUserId,
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
@@ -54,7 +56,11 @@ const CommentSection = ({
   };
 
   const sortedComments = Array.isArray(post.comments)
-    ? [...post.comments].sort((a, b) => new Date(b.date) - new Date(a.date))
+    ? [...post.comments].sort((a, b) => {
+        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date || 0);
+        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date || 0);
+        return dateB - dateA; // Malejące sortowanie
+      })
     : [];
 
   const formatDate = (date) => {
@@ -104,12 +110,13 @@ const CommentSection = ({
       </div>
 
       {/* Wyświetlanie komentarzy */}
+      {/* Wyświetlanie komentarzy */}
       {sortedComments.length > 0 && (
         <div className="mt-4 max-h-52 overflow-y-auto space-y-4">
           {sortedComments.map((comment) => (
             <div
               key={comment.id}
-              className="flex items-center bg-gray-800 p-3 rounded shadow-md"
+              className="flex items-center bg-gray-800 p-2 rounded shadow-md relative"
             >
               <img
                 src={comment.authorPicture || "/default-avatar.png"}
@@ -126,9 +133,20 @@ const CommentSection = ({
                 </Link>
                 <p className="text-gray-300 text-sm">{comment.content}</p>
               </div>
-              <span className="text-gray-500 text-xs ml-2">
+              <span className="text-gray-500 text-xs ml-2 mt-7">
                 {comment.date ? formatDate(comment.date) : "Brak daty"}
               </span>
+
+              {/* Usuwanie komentarza */}
+              {comment.authorId === currentUserId && (
+                <button
+                  onClick={() => handleDeleteComment(post.id, comment.id)}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-sm"
+                  title="Usuń komentarz"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -154,6 +172,8 @@ CommentSection.propTypes = {
   newComment: PropTypes.object.isRequired,
   handleCommentChange: PropTypes.func.isRequired,
   handleAddComment: PropTypes.func.isRequired,
+  handleDeleteComment: PropTypes.func.isRequired, // Dodano
+  currentUserId: PropTypes.string.isRequired, // Dodano
 };
 
 export default CommentSection;
