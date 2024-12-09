@@ -227,44 +227,31 @@ const HomePage = () => {
     const commentsRef = collection(db, "posts", postId, "comments");
 
     try {
-      const docRef = doc(db, "profiles", user.uid);
+      const docRef = doc(db, "profiles", user.uid); // Pobieranie danych autora z kolekcji `profiles`
       const docSnap = await getDoc(docRef);
 
-      let authorName = "Anonim";
+      let authorName = user.displayName || "Anonim";
+      let authorPicture = "/default-avatar.png";
+
       if (docSnap.exists()) {
         const profileData = docSnap.data();
         authorName = `${profileData.firstName} ${profileData.lastName}`;
+        authorPicture = profileData.profilePicture || "/default-avatar.png";
       }
 
       const newCommentData = {
         content: newComment[postId],
         author: authorName,
+        authorId: user.uid,
+        authorPicture: authorPicture,
         date: serverTimestamp(),
       };
 
+      // Dodanie komentarza do podkolekcji `comments`
       await addDoc(commentsRef, newCommentData);
 
-      const postRef = doc(db, "posts", postId);
-      const postSnapshot = await getDoc(postRef);
-      const postData = postSnapshot.data();
-
-      if (postData.userId !== user.uid) {
-        const notificationRef = collection(
-          db,
-          "notifications",
-          postData.userId,
-          "userNotifications"
-        );
-        await addDoc(notificationRef, {
-          message: `${authorName} skomentował Twój post`,
-          postId,
-          date: serverTimestamp(),
-          read: false,
-        });
-      }
-
-      setNewComment((prev) => ({ ...prev, [postId]: "" }));
-      fetchPosts();
+      setNewComment((prev) => ({ ...prev, [postId]: "" })); // Czyszczenie pola komentarza
+      fetchPosts(); // Odświeżenie postów po dodaniu komentarza
     } catch (error) {
       console.error("Błąd podczas dodawania komentarza:", error);
     }
