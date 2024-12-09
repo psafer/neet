@@ -11,7 +11,6 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
-import { orderBy } from "lodash";
 
 const PostItem = ({
   post,
@@ -29,6 +28,8 @@ const PostItem = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [comments, setComments] = useState([]); // Nowy stan dla komentarzy
+  const [isModalOpen, setIsModalOpen] = useState(false); // Stan dla modala
+  const [modalImage, setModalImage] = useState(null); // Obraz w modalu
 
   // Pobieranie statusu obserwacji użytkownika
   useEffect(() => {
@@ -51,7 +52,7 @@ const PostItem = ({
   // Pobieranie komentarzy w czasie rzeczywistym
   useEffect(() => {
     const commentsRef = collection(db, "posts", post.id, "comments");
-    const q = query(commentsRef, orderBy("date", "desc"));
+    const q = query(commentsRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedComments = snapshot.docs.map((doc) => ({
@@ -89,6 +90,16 @@ const PostItem = ({
 
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
+  };
+
+  const openModal = (imageUrl) => {
+    setModalImage(imageUrl);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalImage(null);
   };
 
   return (
@@ -143,12 +154,14 @@ const PostItem = ({
       <div className="p-4 border border-gray-600 rounded-lg">
         <p className="text-gray-300">{post.content}</p>
 
+        {/* Wyświetlanie obrazów */}
         {post.imageUrl && post.imageUrl.length > 0 && (
           <div className="relative mt-4">
             <img
               src={post.imageUrl[currentImageIndex]}
               alt={`Post Image ${currentImageIndex + 1}`}
-              className="w-auto h-64 object-contain rounded-lg mx-auto"
+              className="w-auto h-64 object-contain rounded-lg mx-auto cursor-pointer"
+              onClick={() => openModal(post.imageUrl[currentImageIndex])}
             />
             {post.imageUrl.length > 1 && (
               <>
@@ -166,6 +179,34 @@ const PostItem = ({
                 </button>
               </>
             )}
+          </div>
+        )}
+
+        {/* Wyświetlanie audio */}
+        {post.audioUrl && post.audioUrl.length > 0 && (
+          <div className="mt-4">
+            {post.audioUrl.map((audio, index) => (
+              <audio
+                key={index}
+                controls
+                src={audio}
+                className="w-full mt-2"
+              ></audio>
+            ))}
+          </div>
+        )}
+
+        {/* Wyświetlanie wideo */}
+        {post.videoUrl && post.videoUrl.length > 0 && (
+          <div className="mt-4">
+            {post.videoUrl.map((video, index) => (
+              <video
+                key={index}
+                controls
+                src={video}
+                className="w-full mt-2"
+              ></video>
+            ))}
           </div>
         )}
 
@@ -213,6 +254,23 @@ const PostItem = ({
           />
         )}
       </div>
+
+      {/* Modal do powiększania obrazka */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+          <img
+            src={modalImage}
+            alt="Modal"
+            className="max-w-full max-h-full rounded"
+          />
+          <button
+            className="absolute top-5 right-5 text-white text-2xl"
+            onClick={closeModal}
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -223,7 +281,8 @@ PostItem.propTypes = {
     userId: PropTypes.string.isRequired,
     content: PropTypes.string.isRequired,
     imageUrl: PropTypes.arrayOf(PropTypes.string),
-    comments: PropTypes.array,
+    audioUrl: PropTypes.arrayOf(PropTypes.string),
+    videoUrl: PropTypes.arrayOf(PropTypes.string),
     likes: PropTypes.arrayOf(PropTypes.string).isRequired,
     date: PropTypes.object,
   }).isRequired,

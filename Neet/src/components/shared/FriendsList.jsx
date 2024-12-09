@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom"; // hook do nawigacji
 import { UserIcon } from "@heroicons/react/24/outline"; // Import z Heroicons v2
+import Status from "./Status";
 
 const FriendsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,8 +117,10 @@ const FriendsList = () => {
                 />
                 <p>{friend.name}</p>
               </div>
-              <div className="flex items-center space-x-2">
-                {/* Ikonka ludzika - prowadzi do profilu użytkownika */}
+              <div className="flex items-center space-x-2 relative">
+                {/* Komponent Status */}
+                <Status userId={friend.id} />
+                {/* Ikonka ludzika */}
                 <button
                   onClick={() => goToProfile(friend.id)}
                   className="text-gray-400 hover:text-white"
