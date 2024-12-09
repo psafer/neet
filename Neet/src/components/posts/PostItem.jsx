@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
@@ -19,6 +19,7 @@ const PostItem = ({
   handleCommentChange,
   newComment,
   handleAddComment,
+  handleDeleteComment,
   handleDeletePost,
   authorName,
   authorProfilePicture,
@@ -30,6 +31,7 @@ const PostItem = ({
   const [comments, setComments] = useState([]); // Nowy stan dla komentarzy
   const [isModalOpen, setIsModalOpen] = useState(false); // Stan dla modala
   const [modalImage, setModalImage] = useState(null); // Obraz w modalu
+  const dropdownRef = useRef(null);
 
   // Pobieranie statusu obserwacji użytkownika
   useEffect(() => {
@@ -64,6 +66,21 @@ const PostItem = ({
 
     return () => unsubscribe();
   }, [post.id]);
+
+  //Kliknięcia poza elementem
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false); // Zamknij dropdown, jeśli kliknięto poza nim
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) =>
@@ -128,13 +145,18 @@ const PostItem = ({
           )}
 
           {isDropdownOpen && (
-            <div className="absolute bg-gray-700 text-white rounded shadow-lg top-full mt-2 w-40 z-10">
-              <button
-                onClick={() => setIsDropdownOpen(false)}
+            <div
+              ref={dropdownRef}
+              className="absolute bg-gray-700 text-white rounded shadow-lg top-full mt-2 w-40 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link
+                to={`/profile/${post.userId}`}
                 className="block w-full text-left px-4 py-2 hover:bg-gray-600"
+                onClick={() => setIsDropdownOpen(false)}
               >
-                <Link to={`/profile/${post.userId}`}>Profil</Link>
-              </button>
+                Profil
+              </Link>
             </div>
           )}
         </div>
@@ -251,6 +273,8 @@ const PostItem = ({
             newComment={newComment}
             handleCommentChange={handleCommentChange}
             handleAddComment={handleAddComment}
+            handleDeleteComment={handleDeleteComment}
+            currentUserId={user.uid}
           />
         )}
       </div>
@@ -295,7 +319,9 @@ PostItem.propTypes = {
   handleCommentChange: PropTypes.func.isRequired,
   newComment: PropTypes.object.isRequired,
   handleAddComment: PropTypes.func.isRequired,
+  handleDeleteComment: PropTypes.func.isRequired, // Dodano
   handleDeletePost: PropTypes.func.isRequired,
+  currentUserId: PropTypes.string.isRequired, // Dodano
 };
 
 export default PostItem;

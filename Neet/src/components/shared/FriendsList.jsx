@@ -94,7 +94,7 @@ const FriendsList = () => {
     isOpen && (
       <div
         ref={listRef}
-        className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white z-50"
+        className="absolute right-0 mt-0 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white z-50"
       >
         <input
           type="text"
