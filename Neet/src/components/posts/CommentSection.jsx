@@ -9,7 +9,6 @@ const CommentSection = ({
   newComment,
   handleCommentChange,
   handleAddComment,
-  updateLocalComments,
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
@@ -40,37 +39,33 @@ const CommentSection = ({
     });
   };
 
+  const handleAddCommentClick = () => {
+    const newCommentContent = newComment[post.id]?.trim();
+    if (newCommentContent) {
+      handleAddComment(post.id);
+      handleCommentChange(post.id, { target: { value: "" } });
+    }
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      const newCommentContent = newComment[post.id]?.trim();
-      if (newCommentContent) {
-        handleAddComment(post.id);
-        updateLocalComments({
-          id: `temp-${Date.now()}`,
-          author: "Ty", // Domyślny autor (dynamicznie ustaw aktualnego użytkownika)
-          authorId: "currentUserId", // Ustaw prawidłowe ID aktualnego użytkownika
-          authorPicture: "/default-avatar.png", // Możesz tu wstawić prawdziwy avatar
-          content: newCommentContent,
-          date: new Date(),
-        });
-      }
+      handleAddCommentClick();
     }
   };
 
   const sortedComments = Array.isArray(post.comments)
-    ? [...post.comments].sort(
-        (a, b) => new Date(b.date?.toDate()) - new Date(a.date?.toDate())
-      )
+    ? [...post.comments].sort((a, b) => new Date(b.date) - new Date(a.date))
     : [];
 
   const formatDate = (date) => {
     if (!date) return "Brak daty";
-    const jsDate = date.toDate ? date.toDate() : date;
+    const jsDate = typeof date.toDate === "function" ? date.toDate() : date;
     return isToday(jsDate) ? format(jsDate, "HH:mm") : format(jsDate, "dd.MM");
   };
 
   return (
     <div className="mt-4 border-t border-gray-600 pt-2" ref={commentSectionRef}>
+      {/* Input do dodawania komentarzy */}
       <div className="mt-2 flex relative">
         <input
           type="text"
@@ -81,27 +76,14 @@ const CommentSection = ({
           className="flex-grow p-2 bg-gray-700 text-white rounded"
         />
         <button
-          onClick={() => {
-            const newCommentContent = newComment[post.id]?.trim();
-            if (newCommentContent) {
-              handleAddComment(post.id);
-              updateLocalComments({
-                id: `temp-${Date.now()}`,
-                author: "Ty",
-                authorId: "currentUserId",
-                authorPicture: "/assets/mini.png",
-                content: newCommentContent,
-                date: new Date(),
-              });
-            }
-          }}
+          onClick={handleAddCommentClick}
           className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2"
         >
           <i className="fa-solid fa-paper-plane"></i>
         </button>
         <button
           type="button"
-          onClick={() => setShowEmojiPicker((prev) => !prev)}
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2"
         >
           <i className="fa-solid fa-smile"></i>
@@ -121,6 +103,7 @@ const CommentSection = ({
         )}
       </div>
 
+      {/* Wyświetlanie komentarzy */}
       {sortedComments.length > 0 && (
         <div className="mt-4 max-h-52 overflow-y-auto space-y-4">
           {sortedComments.map((comment) => (
@@ -130,7 +113,8 @@ const CommentSection = ({
             >
               <img
                 src={comment.authorPicture || "/default-avatar.png"}
-                alt="Profile"
+                alt={`${comment.author}'s profile`}
+                onError={(e) => (e.target.src = "/default-avatar.png")}
                 className="w-8 h-8 rounded-full mr-3"
               />
               <div className="flex-grow">
@@ -160,7 +144,7 @@ CommentSection.propTypes = {
       PropTypes.shape({
         id: PropTypes.string.isRequired,
         author: PropTypes.string.isRequired,
-        authorId: PropTypes.string,
+        authorId: PropTypes.string.isRequired,
         authorPicture: PropTypes.string,
         content: PropTypes.string.isRequired,
         date: PropTypes.object,
@@ -170,7 +154,6 @@ CommentSection.propTypes = {
   newComment: PropTypes.object.isRequired,
   handleCommentChange: PropTypes.func.isRequired,
   handleAddComment: PropTypes.func.isRequired,
-  updateLocalComments: PropTypes.func.isRequired,
 };
 
 export default CommentSection;
