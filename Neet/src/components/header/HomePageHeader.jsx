@@ -272,7 +272,7 @@ const HomePageHeader = () => {
             {isMenuOpen && (
               <div
                 ref={menuRef}
-                className="absolute top-full right-0 mt-2 bg-gray-800 rounded shadow-lg z-50 transition ease-out duration-200"
+                className="absolute top-full right-0 mt-6 bg-gray-800 rounded shadow-lg z-50 transition ease-out duration-200"
               >
                 <button
                   onClick={() => navigate(`/profile/${user.uid}`)}
