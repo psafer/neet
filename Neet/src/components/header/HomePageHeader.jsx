@@ -4,11 +4,12 @@ import {
   collection,
   query,
   orderBy,
+  onSnapshot,
   getDocs,
   doc,
   getDoc,
 } from "firebase/firestore";
-import { signOut } from "firebase/auth"; // Poprawny import signOut
+import { signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import {
   BellIcon,
@@ -28,6 +29,7 @@ const HomePageHeader = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const menuRef = useRef(null);
   const friendsListRef = useRef(null);
@@ -50,6 +52,24 @@ const HomePageHeader = () => {
 
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const notificationsRef = collection(
+      db,
+      "notifications",
+      user.uid,
+      "userNotifications"
+    );
+    const q = query(notificationsRef, orderBy("date", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setNotificationCount(snapshot.docs.length); // Aktualizuj licznik powiadomień
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -216,9 +236,16 @@ const HomePageHeader = () => {
           <div className="flex items-center relative">
             <div className="relative ml-4">
               <BellIcon
-                className="w-8 h-8 text-gray-400 cursor-pointer"
+                className={`w-8 h-8 text-gray-400 cursor-pointer ${
+                  notificationCount > 0 ? "bell-shake" : ""
+                }`}
                 onClick={toggleNotifications}
               />
+              {notificationCount > 0 && (
+                <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
+                  {notificationCount}
+                </span>
+              )}
               {isNotificationsOpen && (
                 <div ref={notificationsRef}>
                   <NotificationPanel userId={user.uid} />
