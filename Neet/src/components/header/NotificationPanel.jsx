@@ -68,7 +68,7 @@ const NotificationPanel = ({ userId }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2 z-50">
+    <div className="absolute right-0 mt-7 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2 z-50">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-bold">Powiadomienia</h3>
         <button
