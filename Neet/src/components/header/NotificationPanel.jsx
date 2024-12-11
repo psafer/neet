@@ -51,15 +51,19 @@ const NotificationPanel = ({ userId }) => {
         batch.delete(notifRef);
       });
       await batch.commit();
-      setNotifications([]); // Reset powiadomień po usunięciu
+      setNotifications([]);
     } catch (error) {
       console.error("Błąd podczas usuwania powiadomień:", error);
     }
   };
 
-  const handleNotificationClick = (postId) => {
-    if (postId) {
-      navigate("/", { state: { highlightedPostId: postId } });
+  const handleNotificationClick = (notif) => {
+    if (notif.type === "post" && notif.postId) {
+      navigate("/", { state: { highlightedPostId: notif.postId } });
+    } else if (notif.type === "follow" && notif.followerId) {
+      navigate(`/profile/${notif.followerId}`);
+    } else {
+      alert("Nie można obsłużyć tego powiadomienia.");
     }
   };
 
@@ -80,7 +84,7 @@ const NotificationPanel = ({ userId }) => {
         notifications.map((notif) => (
           <div
             key={notif.id}
-            onClick={() => handleNotificationClick(notif.postId)}
+            onClick={() => handleNotificationClick(notif)}
             className="border-b border-gray-600 py-2 px-3 cursor-pointer hover:bg-gray-700 hover:text-orange-300 transition-all rounded"
           >
             <p className="text-sm">{notif.message}</p>

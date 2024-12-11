@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { db, auth } from "../../firebaseConfig"; // Import auth for current user
+import { db, auth } from "../../firebaseConfig";
 import {
   collection,
   query,
@@ -16,28 +16,24 @@ import { format } from "date-fns";
 import HomePageHeader from "../header/HomePageHeader";
 
 const UserProfile = () => {
-  const { userId } = useParams(); // Get userId from URL
+  const { userId } = useParams();
   const [posts, setPosts] = useState([]);
   const [profileData, setProfileData] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState({});
-  const [isFollowing, setIsFollowing] = useState(false); // New state for following status
-  const [loadingFollowStatus, setLoadingFollowStatus] = useState(true); // State to track if follow status is loading
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
   const navigate = useNavigate();
-  const currentUser = auth.currentUser; // Get currently logged-in user
+  const currentUser = auth.currentUser;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        // Fetch the user's profile data
         const profileRef = doc(db, "profiles", userId);
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
           setProfileData(profileSnap.data());
-        } else {
-          console.log("Brak profilu użytkownika");
         }
 
-        // Fetch the posts for the user
         const postsCollection = collection(db, "posts");
         const q = query(
           postsCollection,
@@ -51,7 +47,6 @@ const UserProfile = () => {
         }));
         setPosts(userPosts);
 
-        // Check if the current user is already following this profile
         const followRef = collection(db, "followers");
         const followQuery = query(
           followRef,
@@ -62,7 +57,7 @@ const UserProfile = () => {
         if (!followSnapshot.empty) {
           setIsFollowing(true);
         }
-        setLoadingFollowStatus(false); // Follow status is now loaded
+        setLoadingFollowStatus(false);
       } catch (error) {
         console.error("Błąd podczas pobierania profilu lub postów:", error);
       }
@@ -73,7 +68,6 @@ const UserProfile = () => {
     }
   }, [userId, currentUser]);
 
-  // Function to handle image navigation (previous image)
   const handlePrevImage = (postId) => {
     setCurrentImageIndex((prevState) => ({
       ...prevState,
@@ -84,7 +78,6 @@ const UserProfile = () => {
     }));
   };
 
-  // Function to handle image navigation (next image)
   const handleNextImage = (postId) => {
     setCurrentImageIndex((prevState) => ({
       ...prevState,
@@ -96,16 +89,13 @@ const UserProfile = () => {
     }));
   };
 
-  // Funkcja do przekierowania do strony głównej i przekazania ID posta
   const handlePostClick = (postId) => {
     navigate(`/`, { state: { highlightedPostId: postId } });
   };
 
-  // Function to handle following the user
   const handleFollow = async () => {
     try {
       if (isFollowing) {
-        // If already following, unfollow the user
         const followRef = collection(db, "followers");
         const followQuery = query(
           followRef,
@@ -118,12 +108,34 @@ const UserProfile = () => {
         });
         setIsFollowing(false);
       } else {
-        // Follow the user
         await addDoc(collection(db, "followers"), {
           followerId: currentUser.uid,
           followingId: userId,
         });
         setIsFollowing(true);
+
+        const followerProfileRef = doc(db, "profiles", currentUser.uid);
+        const followerProfileSnap = await getDoc(followerProfileRef);
+
+        let followerName = "Nieznany użytkownik";
+        if (followerProfileSnap.exists()) {
+          const profileData = followerProfileSnap.data();
+          followerName = `${profileData.firstName} ${profileData.lastName}`;
+        }
+
+        const notificationsRef = collection(
+          db,
+          "notifications",
+          userId,
+          "userNotifications"
+        );
+        await addDoc(notificationsRef, {
+          message: `${followerName} zaobserwował Cię!`,
+          type: "follow",
+          followerId: currentUser.uid,
+          date: new Date(),
+          read: false,
+        });
       }
     } catch (error) {
       console.error("Błąd podczas obsługi zaobserwowania:", error);
@@ -148,8 +160,6 @@ const UserProfile = () => {
               <h1 className="text-2xl font-bold">
                 {profileData.firstName} {profileData.lastName}
               </h1>
-
-              {/* Follow/Unfollow button, only shown if userId is not current user's ID */}
               {!loadingFollowStatus && userId !== currentUser.uid && (
                 <button
                   onClick={handleFollow}
@@ -184,7 +194,6 @@ const UserProfile = () => {
                       alt={`Post Image ${currentImageIndex[post.id] + 1 || 1}`}
                       className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
                     />
-
                     {post.imageUrl.length > 1 && (
                       <>
                         <button
