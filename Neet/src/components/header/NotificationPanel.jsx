@@ -38,27 +38,29 @@ const NotificationPanel = ({ userId }) => {
   }, [userId]);
 
   const deleteNotifications = async () => {
-    const batch = writeBatch(db);
-    notifications.forEach((notif) => {
-      const notifRef = doc(
-        db,
-        "notifications",
-        userId,
-        "userNotifications",
-        notif.id
-      );
-      batch.delete(notifRef);
-    });
-    await batch.commit();
-    setNotifications([]);
+    try {
+      const batch = writeBatch(db);
+      notifications.forEach((notif) => {
+        const notifRef = doc(
+          db,
+          "notifications",
+          userId,
+          "userNotifications",
+          notif.id
+        );
+        batch.delete(notifRef);
+      });
+      await batch.commit();
+      setNotifications([]); // Reset powiadomień po usunięciu
+    } catch (error) {
+      console.error("Błąd podczas usuwania powiadomień:", error);
+    }
   };
 
   const handleNotificationClick = (postId) => {
-    if (!postId) {
-      alert("PostId jest nieprawidłowy lub nie istnieje.");
-      return;
+    if (postId) {
+      navigate("/", { state: { highlightedPostId: postId } });
     }
-    navigate("/", { state: { highlightedPostId: postId } });
   };
 
   return (
@@ -80,8 +82,6 @@ const NotificationPanel = ({ userId }) => {
             key={notif.id}
             onClick={() => handleNotificationClick(notif.postId)}
             className="border-b border-gray-600 py-2 px-3 cursor-pointer hover:bg-gray-700 hover:text-orange-300 transition-all rounded"
-            role="button"
-            tabIndex={0}
           >
             <p className="text-sm">{notif.message}</p>
             <span className="text-xs text-gray-400">
