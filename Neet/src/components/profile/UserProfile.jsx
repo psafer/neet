@@ -187,37 +187,63 @@ const UserProfile = () => {
               >
                 <p className="text-gray-300">{post.content}</p>
 
-                {post.imageUrl && post.imageUrl.length > 0 && (
-                  <div className="relative mt-4">
-                    <img
-                      src={post.imageUrl[currentImageIndex[post.id] || 0]}
-                      alt={`Post Image ${currentImageIndex[post.id] + 1 || 1}`}
-                      className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
+                {post.imageUrl &&
+                  Array.isArray(post.imageUrl) &&
+                  post.imageUrl.length > 0 && (
+                    <div className="relative mt-4">
+                      <img
+                        src={post.imageUrl[currentImageIndex[post.id] || 0]}
+                        alt={`Post Image ${
+                          currentImageIndex[post.id] + 1 || 1
+                        }`}
+                        className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
+                      />
+                      {post.imageUrl.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePrevImage(post.id);
+                            }}
+                            className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
+                          >
+                            &#8592;
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleNextImage(post.id);
+                            }}
+                            className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
+                          >
+                            &#8594;
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                {post.videoUrl &&
+                  typeof post.videoUrl === "string" &&
+                  post.videoUrl.trim() !== "" &&
+                  post.videoUrl[0] !== "" && (
+                    <video
+                      controls
+                      className="w-full rounded-lg mt-4"
+                      src={post.videoUrl[0]}
                     />
-                    {post.imageUrl.length > 1 && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePrevImage(post.id);
-                          }}
-                          className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
-                        >
-                          &#8592;
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleNextImage(post.id);
-                          }}
-                          className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
-                        >
-                          &#8594;
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+                  )}
+
+                {post.audioUrl &&
+                  typeof post.audioUrl === "string" &&
+                  post.audioUrl.trim() !== "" &&
+                  post.audioUrl[0] !== "" && (
+                    <audio
+                      controls
+                      className="w-full rounded-lg mt-4"
+                      src={post.audioUrl[0]}
+                    />
+                  )}
 
                 <div className="flex justify-between mt-2 text-sm text-gray-500">
                   <span>

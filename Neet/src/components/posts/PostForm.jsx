@@ -176,8 +176,8 @@ const PostForm = ({ handleSubmitPost }) => {
     handleSubmitPost(
       newPost.content,
       uploadedImageUrls,
-      uploadedVideoUrls,
-      uploadedAudioUrls
+      uploadedVideoUrls.length > 0 ? uploadedVideoUrls : null,
+      uploadedAudioUrls.length > 0 ? uploadedAudioUrls : null
     );
     setUploading(false);
     setNewPost({
