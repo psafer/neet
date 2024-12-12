@@ -30,6 +30,7 @@ const HomePageHeader = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
   const menuRef = useRef(null);
   const friendsListRef = useRef(null);
@@ -65,7 +66,10 @@ const HomePageHeader = () => {
     const q = query(notificationsRef, orderBy("date", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setNotificationCount(snapshot.docs.length); // Aktualizuj licznik powiadomień
+      const notifications = snapshot.docs.map((doc) => doc.data());
+      setNotificationCount(snapshot.docs.length);
+      // Ustaw flagę, jeśli są nieprzeczytane powiadomienia
+      setHasNewNotifications(notifications.some((notif) => !notif.read));
     });
 
     return () => unsubscribe();
@@ -148,6 +152,9 @@ const HomePageHeader = () => {
 
   const toggleNotifications = () => {
     setIsNotificationsOpen((prev) => !prev);
+    if (hasNewNotifications) {
+      setHasNewNotifications(false); // Resetuj status nowych powiadomień
+    }
   };
 
   const handleProfileClick = () => {
@@ -237,7 +244,7 @@ const HomePageHeader = () => {
             <div className="relative ml-4">
               <BellIcon
                 className={`w-8 h-8 text-gray-400 cursor-pointer ${
-                  notificationCount > 0 ? "bell-shake" : ""
+                  hasNewNotifications ? "bell-shake" : ""
                 }`}
                 onClick={toggleNotifications}
               />

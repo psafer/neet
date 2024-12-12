@@ -59,9 +59,17 @@ const NotificationPanel = ({ userId }) => {
 
   const handleNotificationClick = (notif) => {
     if (notif.type === "post" && notif.postId) {
+      // Przejdź do posta
       navigate("/", { state: { highlightedPostId: notif.postId } });
     } else if (notif.type === "follow" && notif.followerId) {
+      // Przejdź do profilu obserwującego
       navigate(`/profile/${notif.followerId}`);
+    } else if (
+      (notif.type === "like" || notif.type === "comment") &&
+      notif.postId
+    ) {
+      // Przejdź do posta, jeśli to polubienie lub komentarz
+      navigate("/", { state: { highlightedPostId: notif.postId } });
     } else {
       alert("Nie można obsłużyć tego powiadomienia.");
     }

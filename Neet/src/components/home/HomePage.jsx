@@ -204,7 +204,8 @@ const HomePage = () => {
 
         await addDoc(notificationRef, {
           message: `${userFullName} polubił Twój post`,
-          postId, // Dodanie ID posta
+          postId, // Dodanie ID
+          type: "like",
           date: serverTimestamp(),
           read: false,
         });
@@ -267,6 +268,7 @@ const HomePage = () => {
         await addDoc(notificationRef, {
           message: `${authorName} dodał komentarz do Twojego posta`,
           postId, // Dodanie ID posta
+          type: "comment",
           date: serverTimestamp(),
           read: false,
         });
