@@ -16,45 +16,54 @@ const Status = ({ userId }) => {
   useEffect(() => {
     const db = getDatabase();
 
-    if (auth.currentUser) {
-      const currentUserStatusRef = ref(db, `status/${auth.currentUser.uid}`);
+    let currentUserStatusRef = null;
 
-      const onlineState = {
-        state: "available",
-        last_changed: serverTimestamp(),
-      };
+    // Obsługa zmiany statusu użytkownika
+    const handleStatusChange = (user) => {
+      if (user) {
+        // Jeśli użytkownik jest zalogowany, ustaw status
+        currentUserStatusRef = ref(db, `status/${user.uid}`);
 
-      const offlineState = {
-        state: "offline",
-        last_changed: serverTimestamp(),
-      };
+        const onlineState = {
+          state: "available",
+          last_changed: serverTimestamp(),
+        };
 
-      // Set offline state on disconnect
-      onDisconnect(currentUserStatusRef).set(offlineState);
-      console.log(
-        "Ustawiono status offline na disconnect dla:",
-        auth.currentUser.uid
-      );
+        const offlineState = {
+          state: "offline",
+          last_changed: serverTimestamp(),
+        };
 
-      // Set online state when active
-      set(currentUserStatusRef, onlineState);
-      console.log("Ustawiono status online dla:", auth.currentUser.uid);
+        // Ustaw status "offline" na disconnect
+        onDisconnect(currentUserStatusRef).set(offlineState);
 
-      // Ensure status is set to offline when window is closed
-      window.addEventListener("beforeunload", () => {
-        set(currentUserStatusRef, offlineState);
-      });
-    }
+        // Ustaw status "online"
+        set(currentUserStatusRef, onlineState);
+      } else if (currentUserStatusRef) {
+        // Jeśli użytkownik się wylogowuje, ustaw "offline"
+        set(currentUserStatusRef, {
+          state: "offline",
+          last_changed: serverTimestamp(),
+        });
+      }
+    };
 
-    // Fetch the status of the given user
+    // Nasłuchuj zmiany użytkownika
+    const unsubscribeAuth = auth.onAuthStateChanged(handleStatusChange);
+
+    // Nasłuchuj statusu użytkownika
     const userStatusRef = ref(db, `status/${userId}`);
-    const unsubscribe = onValue(userStatusRef, (snapshot) => {
+    const unsubscribeStatus = onValue(userStatusRef, (snapshot) => {
       if (snapshot.exists()) {
         setStatus(snapshot.val().state || "offline");
       }
     });
 
-    return () => unsubscribe();
+    // Posprzątaj
+    return () => {
+      unsubscribeAuth();
+      unsubscribeStatus();
+    };
   }, [userId]);
 
   const getStatusColor = () => {
@@ -79,7 +88,7 @@ const Status = ({ userId }) => {
 };
 
 Status.propTypes = {
-  userId: PropTypes.string.isRequired, // ID użytkownika, którego status sprawdzamy
+  userId: PropTypes.string.isRequired,
 };
 
 export default Status;
