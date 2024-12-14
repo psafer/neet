@@ -13,13 +13,14 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { format } from "date-fns";
+import { UserIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/solid";
 import HomePageHeader from "../header/HomePageHeader";
 
 const UserProfile = () => {
   const { userId } = useParams();
   const [posts, setPosts] = useState([]);
   const [profileData, setProfileData] = useState(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState({});
+  const [followersCount, setFollowersCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
   const navigate = useNavigate();
@@ -47,6 +48,14 @@ const UserProfile = () => {
         }));
         setPosts(userPosts);
 
+        const followersCollection = collection(db, "followers");
+        const followersQuery = query(
+          followersCollection,
+          where("followingId", "==", userId)
+        );
+        const followersSnapshot = await getDocs(followersQuery);
+        setFollowersCount(followersSnapshot.size);
+
         const followRef = collection(db, "followers");
         const followQuery = query(
           followRef,
@@ -68,31 +77,6 @@ const UserProfile = () => {
     }
   }, [userId, currentUser]);
 
-  const handlePrevImage = (postId) => {
-    setCurrentImageIndex((prevState) => ({
-      ...prevState,
-      [postId]:
-        prevState[postId] === 0
-          ? posts.find((post) => post.id === postId).imageUrl.length - 1
-          : prevState[postId] - 1,
-    }));
-  };
-
-  const handleNextImage = (postId) => {
-    setCurrentImageIndex((prevState) => ({
-      ...prevState,
-      [postId]:
-        prevState[postId] ===
-        posts.find((post) => post.id === postId).imageUrl.length - 1
-          ? 0
-          : prevState[postId] + 1,
-    }));
-  };
-
-  const handlePostClick = (postId) => {
-    navigate(`/`, { state: { highlightedPostId: postId } });
-  };
-
   const handleFollow = async () => {
     try {
       if (isFollowing) {
@@ -107,39 +91,22 @@ const UserProfile = () => {
           deleteDoc(doc(db, "followers", docSnap.id));
         });
         setIsFollowing(false);
+        setFollowersCount((prev) => prev - 1);
       } else {
         await addDoc(collection(db, "followers"), {
           followerId: currentUser.uid,
           followingId: userId,
         });
         setIsFollowing(true);
-
-        const followerProfileRef = doc(db, "profiles", currentUser.uid);
-        const followerProfileSnap = await getDoc(followerProfileRef);
-
-        let followerName = "Nieznany użytkownik";
-        if (followerProfileSnap.exists()) {
-          const profileData = followerProfileSnap.data();
-          followerName = `${profileData.firstName} ${profileData.lastName}`;
-        }
-
-        const notificationsRef = collection(
-          db,
-          "notifications",
-          userId,
-          "userNotifications"
-        );
-        await addDoc(notificationsRef, {
-          message: `${followerName} zaobserwował Cię!`,
-          type: "follow",
-          followerId: currentUser.uid,
-          date: new Date(),
-          read: false,
-        });
+        setFollowersCount((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Błąd podczas obsługi zaobserwowania:", error);
     }
+  };
+
+  const handlePostClick = (postId) => {
+    navigate("/", { state: { highlightedPostId: postId } });
   };
 
   return (
@@ -147,33 +114,56 @@ const UserProfile = () => {
       <HomePageHeader />
       <main className="flex flex-1 justify-center items-start pt-14">
         <div className="w-5/6 p-4">
-          <h2 className="text-xl font-bold mb-4 text-center">
-            Posty użytkownika
-          </h2>
           {profileData && (
-            <div className="text-center mb-6">
+            <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 mx-auto max-w-3xl flex items-center">
+              {/* Zdjęcie profilowe */}
               <img
                 src={profileData.profilePicture || "/mini.png"}
                 alt="Profile"
-                className="w-24 h-24 rounded-full mx-auto mb-2"
+                className="w-32 h-32 rounded-full object-cover border-4 border-gray-700"
               />
-              <h1 className="text-2xl font-bold">
-                {profileData.firstName} {profileData.lastName}
-              </h1>
-              {!loadingFollowStatus && userId !== currentUser.uid && (
-                <button
-                  onClick={handleFollow}
-                  className={`mt-4 px-6 py-2 rounded-lg ${
-                    isFollowing
-                      ? "bg-gray-500 text-white"
-                      : "bg-blue-500 text-white"
-                  }`}
-                >
-                  {isFollowing ? "Zaobserwowany" : "Zaobserwuj"}
-                </button>
-              )}
+
+              {/* Informacje o użytkowniku */}
+              <div className="ml-6 flex-grow">
+                <h1 className="text-3xl font-bold mb-2">
+                  {profileData.firstName} {profileData.lastName}
+                </h1>
+                <p className="text-gray-400 text-sm mb-4">
+                  {profileData.bio || "Ten użytkownik nie ma jeszcze opisu."}
+                </p>
+                {!loadingFollowStatus && userId !== currentUser.uid && (
+                  <button
+                    onClick={handleFollow}
+                    className={`mt-4 px-6 py-2 rounded-lg ${
+                      isFollowing
+                        ? "bg-gray-500 text-white"
+                        : "bg-blue-500 text-white"
+                    }`}
+                  >
+                    {isFollowing ? "Zaobserwowany" : "Zaobserwuj"}
+                  </button>
+                )}
+              </div>
+
+              {/* Ikony i liczby */}
+              <div className="ml-auto flex items-center space-x-8">
+                <div className="flex flex-col items-center">
+                  <ClipboardDocumentListIcon className="w-10 h-10 text-orange-500" />
+                  <span className="text-lg font-bold">{posts.length}</span>
+                  <p className="text-gray-400 text-sm">Posty</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <UserIcon className="w-10 h-10 text-blue-500" />
+                  <span className="text-lg font-bold">{followersCount}</span>
+                  <p className="text-gray-400 text-sm">Obserwujący</p>
+                </div>
+              </div>
             </div>
           )}
+
+          <h2 className="text-xl font-bold mb-4 text-center">
+            Posty użytkownika
+          </h2>
           {posts.length === 0 ? (
             <p className="text-center text-gray-400">
               Brak postów do wyświetlenia.
@@ -186,65 +176,35 @@ const UserProfile = () => {
                 onClick={() => handlePostClick(post.id)}
               >
                 <p className="text-gray-300">{post.content}</p>
-
                 {post.imageUrl &&
                   Array.isArray(post.imageUrl) &&
                   post.imageUrl.length > 0 && (
-                    <div className="relative mt-4">
+                    <div className="mt-4">
                       <img
-                        src={post.imageUrl[currentImageIndex[post.id] || 0]}
-                        alt={`Post Image ${
-                          currentImageIndex[post.id] + 1 || 1
-                        }`}
-                        className="w-auto h-64 object-contain rounded-lg mx-auto transition duration-500 ease-in-out transform"
+                        src={post.imageUrl[0]}
+                        alt="Post content"
+                        className="w-full rounded-lg object-contain"
                       />
-                      {post.imageUrl.length > 1 && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePrevImage(post.id);
-                            }}
-                            className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
-                          >
-                            &#8592;
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleNextImage(post.id);
-                            }}
-                            className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
-                          >
-                            &#8594;
-                          </button>
-                        </>
-                      )}
                     </div>
                   )}
-
                 {post.videoUrl &&
-                  typeof post.videoUrl === "string" &&
-                  post.videoUrl.trim() !== "" &&
-                  post.videoUrl[0] !== "" && (
+                  Array.isArray(post.videoUrl) &&
+                  post.videoUrl.length > 0 && (
                     <video
                       controls
                       className="w-full rounded-lg mt-4"
                       src={post.videoUrl[0]}
                     />
                   )}
-
                 {post.audioUrl &&
-                  typeof post.audioUrl === "string" &&
-                  post.audioUrl.trim() !== "" &&
-                  post.audioUrl[0] !== "" && (
+                  Array.isArray(post.audioUrl) &&
+                  post.audioUrl.length > 0 && (
                     <audio
                       controls
                       className="w-full rounded-lg mt-4"
                       src={post.audioUrl[0]}
                     />
                   )}
-
                 <div className="flex justify-between mt-2 text-sm text-gray-500">
                   <span>
                     Opublikowano:{" "}

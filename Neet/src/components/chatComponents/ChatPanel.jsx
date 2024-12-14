@@ -143,7 +143,7 @@ const ChatPanel = () => {
                 <div
                   key={friend.id}
                   onClick={() => openConversation(friend)}
-                  className={`flex items-center p-2 text-white cursor-pointer rounded relative ${
+                  className={`flex items-center p-2 text-white cursor-pointer relative ${
                     activeFriendId === friend.id
                       ? "bg-gray-800"
                       : "bg-gray-600 hover:bg-gray-500"

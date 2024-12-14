@@ -18,6 +18,7 @@ import {
 } from "@heroicons/react/24/outline";
 import FriendsList from "../shared/FriendsList";
 import NotificationPanel from "./NotificationPanel";
+import UserMenu from "./UserMenu";
 import debounce from "lodash/debounce";
 
 const HomePageHeader = () => {
@@ -157,10 +158,6 @@ const HomePageHeader = () => {
     }
   };
 
-  const handleProfileClick = () => {
-    setIsMenuOpen((prev) => !prev);
-  };
-
   return (
     <>
       <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
@@ -274,32 +271,10 @@ const HomePageHeader = () => {
               src={profilePicture || "/mini.png"}
               alt="Profile"
               className="w-10 h-10 rounded-full cursor-pointer"
-              onClick={handleProfileClick}
+              onClick={() => setIsMenuOpen((prev) => !prev)}
             />
             {isMenuOpen && (
-              <div
-                ref={menuRef}
-                className="absolute top-full right-0 mt-6 bg-gray-800 rounded shadow-lg z-50 transition ease-out duration-200"
-              >
-                <button
-                  onClick={() => navigate(`/profile/${user.uid}`)}
-                  className="block px-4 py-2 text-white hover:bg-gray-700"
-                >
-                  Moje Posty
-                </button>
-                <button
-                  onClick={() => navigate("/profile")}
-                  className="block px-4 py-2 text-white hover:bg-gray-700"
-                >
-                  Profil
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className="block px-4 py-2 text-white hover:bg-gray-700"
-                >
-                  Wyloguj
-                </button>
-              </div>
+              <UserMenu ref={menuRef} user={user} onSignOut={handleSignOut} />
             )}
           </div>
         )}
