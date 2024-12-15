@@ -24,11 +24,11 @@ import ChatPanel from "../chatComponents/ChatPanel"; // Import ChatPanel
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
   const [user, setUser] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
   const [newComment, setNewComment] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
-  const [filter, setFilter] = useState("all");
   const [profiles, setProfiles] = useState({});
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
@@ -114,12 +114,6 @@ const HomePage = () => {
       profilePicture: null,
     };
   };
-
-  const filteredPosts = posts.filter((post) => {
-    if (filter === "all") return true;
-    if (filter === "friends") return post.userId && post.userId !== user.uid;
-    return true;
-  });
 
   useEffect(() => {
     if (highlightedPostId) {
@@ -302,7 +296,7 @@ const HomePage = () => {
         <main className="w-5/6 p-4">
           {user && (
             <div className="w-full flex flex-col items-center mb-4">
-              <FilterPosts currentFilter={filter} setFilter={setFilter} />
+              <FilterPosts posts={posts} setFilteredPosts={setFilteredPosts} />
               <PostForm
                 user={user}
                 profilePicture={profilePicture}

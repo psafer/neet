@@ -97,6 +97,31 @@ const UserProfile = () => {
           followerId: currentUser.uid,
           followingId: userId,
         });
+
+        // Dodanie powiadomienia
+        const followerProfileRef = doc(db, "profiles", currentUser.uid);
+        const followerProfileSnap = await getDoc(followerProfileRef);
+
+        let followerName = "Nieznany użytkownik";
+        if (followerProfileSnap.exists()) {
+          const profileData = followerProfileSnap.data();
+          followerName = `${profileData.firstName} ${profileData.lastName}`;
+        }
+
+        const notificationsRef = collection(
+          db,
+          "notifications",
+          userId,
+          "userNotifications"
+        );
+        await addDoc(notificationsRef, {
+          message: `${followerName} zaobserwował Cię!`,
+          type: "follow",
+          followerId: currentUser.uid,
+          date: new Date(),
+          read: false,
+        });
+
         setIsFollowing(true);
         setFollowersCount((prev) => prev + 1);
       }
