@@ -10,7 +10,7 @@ import HomePage from "./src/components/home/HomePage";
 import LoginPage from "./src/components/auth/LoginPage";
 import RegisterPage from "./src/components/auth/RegisterPage";
 import CreateProfilePage from "./src/components/profile/CreateProfilePage";
-import ProfilePage from "./src/components/profile/ProfilePage";
+import ProfileSettings from "./src/components/profile/ProfileSettings";
 import UserProfile from "./src/components/profile/UserProfile";
 import { auth } from "./firebaseConfig"; // Import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
@@ -37,7 +37,7 @@ function App() {
           />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/createProfilePage" element={<CreateProfilePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfileSettings />} />
           <Route path="/profile/:userId" element={<UserProfile />} />
         </Routes>
       </Router>
