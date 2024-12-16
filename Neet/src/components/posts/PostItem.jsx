@@ -24,29 +24,16 @@ const PostItem = ({
   authorName,
   authorProfilePicture,
 }) => {
-  // Stan do obsługi bieżącego obrazu w galerii
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // Stan do obsługi widoczności formularza komentarzy
   const [showCommentForm, setShowCommentForm] = useState(false);
-
-  // Stan dla rozwijanej listy opcji (dropdown)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // Stan do sprawdzania, czy użytkownik obserwuje autora posta
   const [isFollowing, setIsFollowing] = useState(false);
-
-  // Stan przechowujący komentarze w czasie rzeczywistym
-  const [comments, setComments] = useState([]);
-
-  // Stan do obsługi modala dla powiększania obrazu
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalImage, setModalImage] = useState(null);
-
-  // Referencja do dropdowna
+  const [comments, setComments] = useState([]); // Nowy stan dla komentarzy
+  const [isModalOpen, setIsModalOpen] = useState(false); // Stan dla modala
+  const [modalImage, setModalImage] = useState(null); // Obraz w modalu
   const dropdownRef = useRef(null);
 
-  // Pobranie statusu obserwacji użytkownika
+  // Pobieranie statusu obserwacji użytkownika
   useEffect(() => {
     const checkFollowingStatus = async () => {
       if (user) {
@@ -80,11 +67,11 @@ const PostItem = ({
     return () => unsubscribe();
   }, [post.id]);
 
-  // Obsługa kliknięcia poza dropdownem
+  //Kliknięcia poza elementem
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false); // Zamknięcie dropdowna
+        setIsDropdownOpen(false); // Zamknij dropdown, jeśli kliknięto poza nim
       }
     };
 
@@ -95,21 +82,18 @@ const PostItem = ({
     };
   }, []);
 
-  // Obsługa nawigacji do poprzedniego obrazu
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) =>
       prevIndex === 0 ? post.imageUrl.length - 1 : prevIndex - 1
     );
   };
 
-  // Obsługa nawigacji do następnego obrazu
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) =>
       prevIndex === post.imageUrl.length - 1 ? 0 : prevIndex + 1
     );
   };
 
-  // Obsługa usunięcia posta
   const handleDelete = () => {
     const confirmed = window.confirm("Czy na pewno chcesz usunąć post?");
     if (confirmed) {
@@ -117,23 +101,19 @@ const PostItem = ({
     }
   };
 
-  // Obsługa wyświetlania formularza komentarzy
   const toggleCommentForm = () => {
     setShowCommentForm((prevState) => !prevState);
   };
 
-  // Obsługa rozwijania dropdowna
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
   };
 
-  // Otwieranie modala z obrazem
   const openModal = (imageUrl) => {
     setModalImage(imageUrl);
     setIsModalOpen(true);
   };
 
-  // Zamknięcie modala
   const closeModal = () => {
     setIsModalOpen(false);
     setModalImage(null);
@@ -141,7 +121,6 @@ const PostItem = ({
 
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg p-6 mx-auto max-w-3xl border border-gray-600 relative">
-      {/* Nagłówek posta z autorem */}
       <div className="flex items-center mb-4 relative">
         {authorProfilePicture ? (
           <img
@@ -165,7 +144,6 @@ const PostItem = ({
             <i className="fa-solid fa-check-circle ml-2 text-green-500"></i>
           )}
 
-          {/* Dropdown z opcjami */}
           {isDropdownOpen && (
             <div
               ref={dropdownRef}
@@ -183,7 +161,6 @@ const PostItem = ({
           )}
         </div>
 
-        {/* Opcja usunięcia posta */}
         {user && user.uid === post.userId && (
           <div className="ml-auto relative">
             <button
@@ -196,11 +173,10 @@ const PostItem = ({
         )}
       </div>
 
-      {/* Treść posta */}
       <div className="p-4 border border-gray-600 rounded-lg">
         <p className="text-gray-300">{post.content}</p>
 
-        {/* Galeria obrazów */}
+        {/* Wyświetlanie obrazów */}
         {post.imageUrl && post.imageUrl.length > 0 && (
           <div className="relative mt-4">
             <img
@@ -228,10 +204,36 @@ const PostItem = ({
           </div>
         )}
 
-        {/* Sekcja lajków i komentarzy */}
+        {/* Wyświetlanie audio */}
+        {post.audioUrl && post.audioUrl.length > 0 && (
+          <div className="mt-4">
+            {post.audioUrl.map((audio, index) => (
+              <audio
+                key={index}
+                controls
+                src={audio}
+                className="w-full mt-2"
+              ></audio>
+            ))}
+          </div>
+        )}
+
+        {/* Wyświetlanie wideo */}
+        {post.videoUrl && post.videoUrl.length > 0 && (
+          <div className="mt-4">
+            {post.videoUrl.map((video, index) => (
+              <video
+                key={index}
+                controls
+                src={video}
+                className="w-full mt-2"
+              ></video>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center">
-            {/* Lajki */}
             <button
               onClick={() => handleLike(post.id)}
               className={`flex items-center text-sm ${
@@ -249,7 +251,6 @@ const PostItem = ({
               ></i>
               {post.likes.length}
             </button>
-            {/* Komentarze */}
             <button
               onClick={toggleCommentForm}
               className="flex items-center text-sm text-gray-500 ml-4"
@@ -258,7 +259,6 @@ const PostItem = ({
               {comments.length}
             </button>
           </div>
-          {/* Data publikacji */}
           <div className="mt-2 text-sm text-gray-500">
             Opublikowano:{" "}
             {post.date
@@ -267,7 +267,6 @@ const PostItem = ({
           </div>
         </div>
 
-        {/* Sekcja komentarzy */}
         {showCommentForm && (
           <CommentSection
             post={{ ...post, comments }}
@@ -280,7 +279,7 @@ const PostItem = ({
         )}
       </div>
 
-      {/* Modal powiększania obrazu */}
+      {/* Modal do powiększania obrazka */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
           <img
@@ -320,8 +319,9 @@ PostItem.propTypes = {
   handleCommentChange: PropTypes.func.isRequired,
   newComment: PropTypes.object.isRequired,
   handleAddComment: PropTypes.func.isRequired,
-  handleDeleteComment: PropTypes.func.isRequired,
+  handleDeleteComment: PropTypes.func.isRequired, // Dodano
   handleDeletePost: PropTypes.func.isRequired,
+  currentUserId: PropTypes.string.isRequired, // Dodano
 };
 
 export default PostItem;
