@@ -9,7 +9,7 @@ import {
   writeBatch,
   doc,
 } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { db } from "../../config/firebaseConfig";
 
 const NotificationPanel = ({ userId }) => {
   const [notifications, setNotifications] = useState([]); // Stan przechowujący listę powiadomień

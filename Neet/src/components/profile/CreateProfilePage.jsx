@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { db } from "../../firebaseConfig";
+import { db } from "../../config/firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/UseAuth"; // Pobranie kontekstu autoryzacji
 import { useNavigate } from "react-router-dom";

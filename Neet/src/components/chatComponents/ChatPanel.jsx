@@ -8,7 +8,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig";
+import { db, auth } from "../../config/firebaseConfig";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";

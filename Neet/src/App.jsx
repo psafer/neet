@@ -12,7 +12,7 @@ import RegisterPage from "./components/auth/RegisterPage";
 import CreateProfilePage from "./components/profile/CreateProfilePage";
 import ProfileSettings from "./components/profile/ProfileSettings";
 import UserProfile from "./components/profile/UserProfile";
-import { auth } from "./firebaseConfig"; // Import Firebase auth
+import { auth } from "./config/firebaseConfig"; // Import Firebase auth
 import { onAuthStateChanged } from "firebase/auth";
 
 function App() {
