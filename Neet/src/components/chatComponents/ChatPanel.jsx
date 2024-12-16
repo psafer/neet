@@ -66,12 +66,14 @@ const ChatPanel = () => {
     fetchFriends();
   }, []);
 
+  // Przełączanie stanu rozwinięcia panelu czatu
   const togglePanel = () => {
     setIsExpanded((prev) => !prev);
   };
 
+  // Otwieranie lub tworzenie nowej konwersacji
   const openConversation = async (friend) => {
-    setActiveFriendId(friend.id); // Ustaw aktywnego znajomego
+    setActiveFriendId(friend.id); // Ustawienie aktywnego znajomego
     const conversationsRef = collection(db, "conversations");
     const q = query(
       conversationsRef,
@@ -84,6 +86,7 @@ const ChatPanel = () => {
       );
 
       if (existingConversation) {
+        // Jeśli konwersacja istnieje, ustaw jej ID jako aktywne
         setActiveConversationId(existingConversation.id);
       } else {
         // Jeśli nie ma konwersacji, utwórz nową
@@ -100,6 +103,7 @@ const ChatPanel = () => {
     return () => unsubscribe();
   };
 
+  // Obsługa zmiany wyszukiwanego tekstu
   const handleSearchChange = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);

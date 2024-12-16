@@ -10,15 +10,69 @@ import {
 import { db, auth } from "../../firebaseConfig";
 import PropTypes from "prop-types";
 
+// Komponent renderujący pojedynczą wiadomość
+const Message = ({ message, isCurrentUser, profilePicture, timestamp }) => (
+  <div
+    className={`mb-4 flex flex-col ${
+      isCurrentUser ? "items-end" : "items-start"
+    }`}
+  >
+    {/* Czas wysłania wiadomości */}
+    <p
+      className={`text-xs mb-1 ${
+        isCurrentUser ? "text-right mr-7" : "text-left ml-7"
+      }`}
+    >
+      {timestamp}
+    </p>
+    <div className="flex items-center">
+      {/* Zdjęcie profilowe nadawcy */}
+      {!isCurrentUser && (
+        <img
+          src={profilePicture}
+          alt="Profile"
+          className="w-4 h-4 rounded-full mr-2 mt-3"
+        />
+      )}
+      {/* Treść wiadomości */}
+      <p
+        className={`inline-block px-3 py-1 rounded-lg max-w-xs ${
+          isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-700 text-white"
+        }`}
+      >
+        {message}
+      </p>
+      {/* Zdjęcie profilowe dla własnych wiadomości */}
+      {isCurrentUser && (
+        <img
+          src={profilePicture}
+          alt="Profile"
+          className="w-4 h-4 rounded-full ml-2 mt-3"
+        />
+      )}
+    </div>
+  </div>
+);
+
+Message.propTypes = {
+  message: PropTypes.string.isRequired,
+  isCurrentUser: PropTypes.bool.isRequired,
+  profilePicture: PropTypes.string,
+  timestamp: PropTypes.string.isRequired,
+};
+
+// Komponent renderujący listę wiadomości
 const MessageList = ({ conversationId }) => {
-  const [messages, setMessages] = useState([]);
-  const [participants, setParticipants] = useState({});
-  const messagesEndRef = useRef(null);
+  const [messages, setMessages] = useState([]); // Lista wiadomości
+  const [participants, setParticipants] = useState({}); // Dane uczestników
+  const [isTyping, setIsTyping] = useState(false); // Stan wskaźnika "Użytkownik pisze..."
+  const messagesEndRef = useRef(null); // Referencja do ostatniej wiadomości
+  const typingTimeoutRef = useRef(null); // Referencja do timeoutu resetującego "pisze..."
 
   useEffect(() => {
     if (!conversationId) return;
 
-    // Pobranie wiadomości
+    // Pobranie wiadomości z Firebase i subskrypcja zmian w czasie rzeczywistym
     const messagesRef = collection(
       db,
       "conversations",
@@ -32,10 +86,36 @@ const MessageList = ({ conversationId }) => {
         id: doc.id,
         ...doc.data(),
       }));
-      setMessages(msgs);
+      setMessages(msgs); // Aktualizacja listy wiadomości
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Usunięcie subskrypcji przy odmontowaniu komponentu
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    // Subskrypcja stanu "Użytkownik pisze..." w czasie rzeczywistym
+    const typingRef = collection(db, "conversations", conversationId, "typing");
+    const unsubscribe = onSnapshot(typingRef, (snapshot) => {
+      const isAnyoneTyping = snapshot.docs.some(
+        (doc) => doc.id !== auth.currentUser.uid && doc.data().isTyping
+      );
+      setIsTyping(isAnyoneTyping); // Aktualizacja stanu "pisze..."
+
+      // Reset wskaźnika po 3 sekundach bezczynności
+      if (isAnyoneTyping) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+          setIsTyping(false);
+        }, 3000);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      clearTimeout(typingTimeoutRef.current); // Wyczyszczenie timeoutu przy odmontowaniu komponentu
+    };
   }, [conversationId]);
 
   useEffect(() => {
@@ -61,7 +141,7 @@ const MessageList = ({ conversationId }) => {
             };
           }
         }
-        setParticipants(participantsData);
+        setParticipants(participantsData); // Ustawienie danych uczestników
       }
     };
 
@@ -91,61 +171,33 @@ const MessageList = ({ conversationId }) => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-800 p-4">
-      {messages.length === 0 ? (
-        <p className="text-gray-400">Brak wiadomości</p>
-      ) : (
-        messages.map((message) => (
-          <div
-            key={message.id}
-            className={`mb-4 flex flex-col ${
-              message.senderId === auth.currentUser.uid
-                ? "items-end"
-                : "items-start"
-            }`}
-          >
-            {/* Czas wysłania wiadomości */}
-            <p
-              className={`text-xs mb-1 ${
-                message.senderId === auth.currentUser.uid
-                  ? "text-gray-400 text-right mr-7"
-                  : "text-gray-400 text-left ml-7"
-              }`}
-            >
-              {message.timestamp ? formatTimestamp(message.timestamp) : ""}
-            </p>
+    <div className="flex-1 flex flex-col justify-end overflow-y-auto bg-gray-800 p-4 relative">
+      {/* Sekcja wiadomości */}
+      <div>
+        {messages.length === 0 ? (
+          <p className="text-gray-400">Brak wiadomości</p>
+        ) : (
+          messages.map((message) => (
+            <Message
+              key={message.id}
+              message={message.content}
+              isCurrentUser={message.senderId === auth.currentUser.uid}
+              profilePicture={participants[message.senderId]?.profilePicture}
+              timestamp={
+                message.timestamp ? formatTimestamp(message.timestamp) : ""
+              }
+            />
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-            <div className="flex items-center">
-              {/* Zdjęcie profilowe */}
-              {message.senderId !== auth.currentUser.uid && (
-                <img
-                  src={participants[message.senderId]?.profilePicture}
-                  alt="Profile"
-                  className="w-4 h-4 rounded-full mr-2 mt-3"
-                />
-              )}
-              <p
-                className={`inline-block px-3 py-1 rounded-lg max-w-xs ${
-                  message.senderId === auth.currentUser.uid
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-700 text-white"
-                }`}
-              >
-                {message.content}
-              </p>
-              {/* Zdjęcie profilowe dla moich wiadomości */}
-              {message.senderId === auth.currentUser.uid && (
-                <img
-                  src={participants[message.senderId]?.profilePicture}
-                  alt="Profile"
-                  className="w-4 h-4 rounded-full ml-2 mt-3"
-                />
-              )}
-            </div>
-          </div>
-        ))
+      {/* Wskaźnik "Użytkownik pisze..." */}
+      {isTyping && (
+        <div className="text-sm text-gray-400 italic absolute bottom-2 left-4">
+          Użytkownik pisze...
+        </div>
       )}
-      <div ref={messagesEndRef} />
     </div>
   );
 };

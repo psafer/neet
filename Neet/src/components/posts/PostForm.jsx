@@ -5,35 +5,39 @@ import PropTypes from "prop-types";
 import { storage } from "../../firebaseConfig";
 
 const PostForm = ({ handleSubmitPost }) => {
+  // Stan formularza postu
   const [newPost, setNewPost] = useState({
-    content: "",
-    images: [],
-    imagePreviews: [],
-    videos: [],
-    videoPreviews: [],
-    audio: [],
-    audioPreviews: [],
+    content: "", // Tekst postu
+    images: [], // Lista wybranych obrazów
+    imagePreviews: [], // Podgląd obrazów
+    videos: [], // Lista wybranych filmów
+    videoPreviews: [], // Podgląd filmów
+    audio: [], // Lista wybranych plików audio
+    audioPreviews: [], // Podgląd plików audio (nazwy plików)
   });
-  const [uploading, setUploading] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [uploading, setUploading] = useState(false); // Czy trwa wysyłanie danych
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Czy Emoji Picker jest widoczny
+  const [isFormOpen, setIsFormOpen] = useState(false); // Czy formularz jest otwarty
+
+  // Referencje do pól wyboru plików i formularza
   const inputFileRef = useRef(null);
   const videoFileRef = useRef(null);
   const audioFileRef = useRef(null);
   const formRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
+  // Nasłuchiwanie kliknięć poza formularzem lub Emoji Pickerem
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (formRef.current && !formRef.current.contains(e.target)) {
-        setIsFormOpen(false);
+        setIsFormOpen(false); // Zamknij formularz
       }
 
       if (
         emojiPickerRef.current &&
         !emojiPickerRef.current.contains(e.target)
       ) {
-        setShowEmojiPicker(false);
+        setShowEmojiPicker(false); // Ukryj Emoji Picker
       }
     };
 
@@ -43,11 +47,13 @@ const PostForm = ({ handleSubmitPost }) => {
     };
   }, []);
 
+  // Obsługa zmiany tekstu w formularzu
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewPost((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Dodawanie emoji do tekstu
   const handleEmojiClick = (emojiData) => {
     const emoji = emojiData.emoji;
     setNewPost((prevPost) => ({
@@ -56,9 +62,10 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
+  // Obsługa wyboru obrazów
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    const imagePreviews = files.map((file) => URL.createObjectURL(file));
+    const files = Array.from(e.target.files); // Pobranie plików
+    const imagePreviews = files.map((file) => URL.createObjectURL(file)); // Tworzenie podglądu obrazów
 
     setNewPost((prevPost) => ({
       ...prevPost,
@@ -67,7 +74,7 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
-  // Obsługa zmiany wideo
+  // Obsługa wyboru wideo
   const handleVideoChange = (e) => {
     const files = Array.from(e.target.files);
     const videoPreviews = files.map((file) => URL.createObjectURL(file));
@@ -79,10 +86,10 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
-  // Obsługa zmiany audio
+  // Obsługa wyboru audio
   const handleAudioChange = (e) => {
     const files = Array.from(e.target.files);
-    const audioPreviews = files.map((file) => file.name); // Nazwa pliku jako podgląd audio
+    const audioPreviews = files.map((file) => file.name); // Wyświetlanie nazw plików
 
     setNewPost((prevPost) => ({
       ...prevPost,
@@ -91,6 +98,7 @@ const PostForm = ({ handleSubmitPost }) => {
     }));
   };
 
+  // Usuwanie wybranego obrazu
   const handleRemoveImage = (index) => {
     setNewPost((prevPost) => {
       const updatedImages = [...prevPost.images];
@@ -107,6 +115,7 @@ const PostForm = ({ handleSubmitPost }) => {
     });
   };
 
+  // Usuwanie wybranego wideo
   const handleRemoveVideo = (index) => {
     setNewPost((prevPost) => {
       const updatedVideos = [...prevPost.videos];
@@ -123,6 +132,7 @@ const PostForm = ({ handleSubmitPost }) => {
     });
   };
 
+  // Usuwanie wybranego audio
   const handleRemoveAudio = (index) => {
     setNewPost((prevPost) => {
       const updatedAudio = [...prevPost.audio];
@@ -139,57 +149,66 @@ const PostForm = ({ handleSubmitPost }) => {
     });
   };
 
+  // Wysłanie formularza
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
 
-    // Uploadowanie zdjęć
-    const uploadedImageUrls = await Promise.all(
-      newPost.images.map(async (image) => {
-        const storageRef = ref(storage, `posts/images/${image.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, image);
-        const snapshot = await uploadTask;
-        return await getDownloadURL(snapshot.ref);
-      })
-    );
+    try {
+      // Upload obrazów
+      const uploadedImageUrls = await Promise.all(
+        newPost.images.map(async (image) => {
+          const storageRef = ref(storage, `posts/images/${image.name}`);
+          const uploadTask = uploadBytesResumable(storageRef, image);
+          const snapshot = await uploadTask;
+          return await getDownloadURL(snapshot.ref);
+        })
+      );
 
-    // Uploadowanie wideo
-    const uploadedVideoUrls = await Promise.all(
-      newPost.videos.map(async (video) => {
-        const storageRef = ref(storage, `posts/videos/${video.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, video);
-        const snapshot = await uploadTask;
-        return await getDownloadURL(snapshot.ref);
-      })
-    );
+      // Upload wideo
+      const uploadedVideoUrls = await Promise.all(
+        newPost.videos.map(async (video) => {
+          const storageRef = ref(storage, `posts/videos/${video.name}`);
+          const uploadTask = uploadBytesResumable(storageRef, video);
+          const snapshot = await uploadTask;
+          return await getDownloadURL(snapshot.ref);
+        })
+      );
 
-    // Uploadowanie audio
-    const uploadedAudioUrls = await Promise.all(
-      newPost.audio.map(async (audioFile) => {
-        const storageRef = ref(storage, `posts/audio/${audioFile.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, audioFile);
-        const snapshot = await uploadTask;
-        return await getDownloadURL(snapshot.ref);
-      })
-    );
+      // Upload audio
+      const uploadedAudioUrls = await Promise.all(
+        newPost.audio.map(async (audioFile) => {
+          const storageRef = ref(storage, `posts/audio/${audioFile.name}`);
+          const uploadTask = uploadBytesResumable(storageRef, audioFile);
+          const snapshot = await uploadTask;
+          return await getDownloadURL(snapshot.ref);
+        })
+      );
 
-    handleSubmitPost(
-      newPost.content,
-      uploadedImageUrls,
-      uploadedVideoUrls.length > 0 ? uploadedVideoUrls : null,
-      uploadedAudioUrls.length > 0 ? uploadedAudioUrls : null
-    );
-    setUploading(false);
-    setNewPost({
-      content: "",
-      images: [],
-      imagePreviews: [],
-      videos: [],
-      videoPreviews: [],
-      audio: [],
-      audioPreviews: [],
-    });
-    setIsFormOpen(false);
+      // Wywołanie funkcji przekazanej jako props z zebranymi danymi
+      handleSubmitPost(
+        newPost.content,
+        uploadedImageUrls,
+        uploadedVideoUrls.length > 0 ? uploadedVideoUrls : null,
+        uploadedAudioUrls.length > 0 ? uploadedAudioUrls : null
+      );
+
+      // Reset formularza
+      setNewPost({
+        content: "",
+        images: [],
+        imagePreviews: [],
+        videos: [],
+        videoPreviews: [],
+        audio: [],
+        audioPreviews: [],
+      });
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Błąd podczas przesyłania postu:", error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -212,7 +231,7 @@ const PostForm = ({ handleSubmitPost }) => {
         <>
           <div className="flex items-center relative">
             <span className="mr-2 ml-1 text-orange-300">Dodaj do posta:</span>
-            {/* Zdjęcia */}
+            {/* Przycisk dodania obrazu */}
             <button
               type="button"
               onClick={() => inputFileRef.current.click()}
@@ -228,7 +247,7 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={inputFileRef}
               className="hidden"
             />
-            {/* Wideo */}
+            {/* Przycisk dodania wideo */}
             <button
               type="button"
               onClick={() => videoFileRef.current.click()}
@@ -244,7 +263,7 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={videoFileRef}
               className="hidden"
             />
-            {/* Audio */}
+            {/* Przycisk dodania audio */}
             <button
               type="button"
               onClick={() => audioFileRef.current.click()}
@@ -260,7 +279,7 @@ const PostForm = ({ handleSubmitPost }) => {
               ref={audioFileRef}
               className="hidden"
             />
-            {/* Emoji */}
+            {/* Przycisk otwarcia Emoji Picker */}
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -268,7 +287,6 @@ const PostForm = ({ handleSubmitPost }) => {
             >
               <i className="fa-solid fa-smile"></i>
             </button>
-
             {showEmojiPicker && (
               <div
                 ref={emojiPickerRef}
@@ -284,6 +302,7 @@ const PostForm = ({ handleSubmitPost }) => {
             )}
           </div>
 
+          {/* Podgląd wybranych plików */}
           <div className="flex flex-wrap gap-2 mt-2">
             {newPost.imagePreviews.map((preview, index) => (
               <div key={index} className="relative">

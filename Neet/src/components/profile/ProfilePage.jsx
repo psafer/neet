@@ -14,6 +14,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
+  // Stany dla danych użytkownika, danych profilu, trybu edycji i formularza
   const [user, setUser] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -24,10 +25,11 @@ const ProfilePage = () => {
     bio: "",
     profilePicture: "",
   });
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(null); // Plik obrazu dla zdjęcia profilowego
 
   const navigate = useNavigate();
 
+  // Ustawianie stanu zalogowanego użytkownika i pobieranie danych profilu
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -37,77 +39,83 @@ const ProfilePage = () => {
           const docRef = doc(db, "profiles", user.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setProfileData(docSnap.data());
-            setFormData(docSnap.data());
+            setProfileData(docSnap.data()); // Ustaw dane profilu
+            setFormData(docSnap.data()); // Ustaw dane formularza
           } else {
-            console.log("No such document!");
+            console.log("Nie znaleziono dokumentu profilu.");
           }
         } catch (error) {
           console.error("Błąd podczas pobierania danych profilu:", error);
         }
       } else {
-        setUser(null);
+        setUser(null); // Wylogowany użytkownik
       }
     });
 
     return () => unsubscribe();
   }, []);
 
+  // Obsługa zmiany danych w formularzu
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Obsługa wyboru pliku zdjęcia profilowego
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
+  // Przesyłanie zdjęcia profilowego do Firebase Storage
   const uploadProfilePicture = async () => {
-    if (!file) return null;
+    if (!file) return null; // Brak pliku do przesłania
 
     const storageRef = ref(storage, `profilePictures/${user.uid}`);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
+    await uploadBytes(storageRef, file); // Przesyłanie pliku
+    return getDownloadURL(storageRef); // Pobieranie URL przesłanego pliku
   };
 
+  // Aktualizacja nazw autora w postach użytkownika
   const updatePostsAuthorName = async (userId, firstName, lastName) => {
-    // Pobieramy wszystkie posty tego użytkownika
     const postsCollection = collection(db, "posts");
     const postsQuery = query(postsCollection, where("userId", "==", userId));
     const postsSnapshot = await getDocs(postsQuery);
 
-    const authorName = `${firstName} ${lastName}`;
+    const authorName = `${firstName} ${lastName}`; // Nowa nazwa autora
 
-    // Aktualizujemy każdy post tego użytkownika
+    // Iteracja przez posty i aktualizacja nazw
     for (const postDoc of postsSnapshot.docs) {
       const postRef = postDoc.ref;
       await updateDoc(postRef, { authorName });
     }
   };
 
+  // Obsługa zapisania zmian w profilu
   const handleSave = async (e) => {
     e.preventDefault();
 
     try {
       let profilePictureURL = formData.profilePicture;
 
+      // Przesyłanie nowego zdjęcia profilowego
       if (file) {
         profilePictureURL = await uploadProfilePicture();
       }
 
+      // Aktualizacja danych profilu w Firebase Firestore
       await updateDoc(doc(db, "profiles", user.uid), {
         ...formData,
         profilePicture: profilePictureURL,
       });
 
-      // Wywołaj updatePostsAuthorName po zapisaniu profilu
+      // Aktualizacja nazw autora w postach
       await updatePostsAuthorName(
         user.uid,
         formData.firstName,
         formData.lastName
       );
 
-      setEditing(false);
-      window.location.reload();
+      setEditing(false); // Wyłączenie trybu edycji
+      window.location.reload(); // Odświeżenie strony
     } catch (error) {
       console.error("Błąd podczas aktualizacji profilu:", error);
     }
@@ -115,7 +123,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950">
-      {/* Logo that links to the homepage */}
+      {/* Logo z odnośnikiem do strony głównej */}
       <img
         src="/mini.png"
         alt="Logo"
@@ -133,7 +141,7 @@ const ProfilePage = () => {
           <div className="flex flex-col items-center">
             {editing ? (
               <form onSubmit={handleSave} className="w-full">
-                {/* Fields for editing profile information */}
+                {/* Formularz edycji danych profilu */}
                 <div className="mb-4">
                   <label
                     htmlFor="firstName"
@@ -227,6 +235,7 @@ const ProfilePage = () => {
                   />
                 </div>
 
+                {/* Przyciski zapisu i anulowania */}
                 <div className="flex justify-between">
                   <button
                     type="submit"

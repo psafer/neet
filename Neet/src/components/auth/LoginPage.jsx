@@ -1,64 +1,67 @@
 import { useState } from "react";
-import { auth, db } from "../../firebaseConfig"; // Pamiętaj o imporcie db dla Firestore
+import { auth, db } from "../../firebaseConfig";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
-import { doc, setDoc, getDoc } from "firebase/firestore"; // Dodaj te importy dla Firestore
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const LoginPage = () => {
+  // Stan przechowujący dane logowania
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // Obsługa logowania za pomocą e-maila i hasła
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // Próba logowania użytkownika
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/"); // Redirect to home page after login
+      navigate("/"); // Przekierowanie na stronę główną
     } catch (error) {
-      console.error("Error logging in:", error);
-      alert(error.message);
+      console.error("Błąd logowania:", error);
+      alert(error.message); // Wyświetlenie błędu logowania
     }
   };
 
+  // Obsługa logowania za pomocą konta Google
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Sprawdź, czy użytkownik ma już profil w Firestore
+      // Sprawdzenie, czy użytkownik posiada profil w Firestore
       const userDocRef = doc(db, "profiles", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      // Jeśli profil nie istnieje, zapisz dane użytkownika, w tym zdjęcie z Google
+      // Tworzenie profilu użytkownika, jeśli nie istnieje
       if (!userDoc.exists()) {
         await setDoc(userDocRef, {
-          firstName: user.displayName.split(" ")[0], // Imię
-          lastName: user.displayName.split(" ")[1] || "", // Nazwisko
-          email: user.email, // E-mail
-          profilePicture: user.photoURL, // Zdjęcie profilowe z Google
-          bio: "Użytkownik Google", // Domyślne bio
+          firstName: user.displayName.split(" ")[0],
+          lastName: user.displayName.split(" ")[1] || "",
+          email: user.email,
+          profilePicture: user.photoURL,
+          bio: "Użytkownik Google",
         });
       }
 
-      // Przekieruj użytkownika po zalogowaniu
-      navigate("/");
+      navigate("/"); // Przekierowanie po zalogowaniu
     } catch (error) {
-      console.error("Error logging in with Google:", error);
-      alert(error.message);
+      console.error("Błąd logowania przez Google:", error);
+      alert(error.message); // Wyświetlenie błędu logowania
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900">
-      {/* Logo */}
+      {/* Logo aplikacji */}
       <img src="/logo.png" alt="Logo" className="w-32 h-32 mb-3" />
 
-      {/* Login Form */}
+      {/* Formularz logowania */}
       <div className="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-8">
         <h1 className="text-4xl font-bold text-center text-orange-500 mb-6">
           Logowanie
@@ -107,6 +110,7 @@ const LoginPage = () => {
           </div>
         </form>
 
+        {/* Przycisk logowania przez Google */}
         <button
           onClick={handleGoogleLogin}
           className="flex items-center justify-center bg-orange-700 hover:bg-orange-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full mt-4"
@@ -136,6 +140,7 @@ const LoginPage = () => {
           <span>Zaloguj się przez Google</span>
         </button>
 
+        {/* Link do strony rejestracji */}
         <p className="mt-4 text-center text-gray-400">
           Nie masz konta?{" "}
           <Link to="/register" className="text-orange-500 hover:underline">
