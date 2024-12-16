@@ -24,13 +24,21 @@ const PostItem = ({
   authorName,
   authorProfilePicture,
 }) => {
+  // Stan do obsługi bieżącego obrazu w galerii
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // Stan do pokazywania formularza komentarzy
   const [showCommentForm, setShowCommentForm] = useState(false);
+  // Stan dla rozwijanej listy dropdown
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // Stan do sprawdzania obserwacji
   const [isFollowing, setIsFollowing] = useState(false);
-  const [comments, setComments] = useState([]); // Nowy stan dla komentarzy
-  const [isModalOpen, setIsModalOpen] = useState(false); // Stan dla modala
-  const [modalImage, setModalImage] = useState(null); // Obraz w modalu
+  // Stan przechowujący komentarze w czasie rzeczywistym
+  const [comments, setComments] = useState([]);
+  // Stan do obsługi modala dla powiększania obrazu
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Obraz w modalu
+  const [modalImage, setModalImage] = useState(null);
+  // Referencja do dropdowna
   const dropdownRef = useRef(null);
 
   // Pobieranie statusu obserwacji użytkownika
@@ -67,7 +75,7 @@ const PostItem = ({
     return () => unsubscribe();
   }, [post.id]);
 
-  //Kliknięcia poza elementem
+  // Obsługa kliknięcia poza dropdownem
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -82,38 +90,39 @@ const PostItem = ({
     };
   }, []);
 
+  // Obsługa nawigacji do poprzedniego obrazu
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) =>
       prevIndex === 0 ? post.imageUrl.length - 1 : prevIndex - 1
     );
   };
-
+  // Obsługa nawigacji do następnego obrazu
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) =>
       prevIndex === post.imageUrl.length - 1 ? 0 : prevIndex + 1
     );
   };
-
+  // Obsługa usunięcia posta
   const handleDelete = () => {
     const confirmed = window.confirm("Czy na pewno chcesz usunąć post?");
     if (confirmed) {
       handleDeletePost(post.id);
     }
   };
-
+  //Obsługa wyświetlenia formularza komentarzy
   const toggleCommentForm = () => {
     setShowCommentForm((prevState) => !prevState);
   };
-
+  // Obsługa rozwijania dropdowna
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
   };
-
+  // Otwierania modala z obrazem
   const openModal = (imageUrl) => {
     setModalImage(imageUrl);
     setIsModalOpen(true);
   };
-
+  // Zamykanie modala z obrazem
   const closeModal = () => {
     setIsModalOpen(false);
     setModalImage(null);
@@ -319,9 +328,9 @@ PostItem.propTypes = {
   handleCommentChange: PropTypes.func.isRequired,
   newComment: PropTypes.object.isRequired,
   handleAddComment: PropTypes.func.isRequired,
-  handleDeleteComment: PropTypes.func.isRequired, // Dodano
+  handleDeleteComment: PropTypes.func.isRequired,
   handleDeletePost: PropTypes.func.isRequired,
-  currentUserId: PropTypes.string.isRequired, // Dodano
+  currentUserId: PropTypes.string.isRequired,
 };
 
 export default PostItem;
