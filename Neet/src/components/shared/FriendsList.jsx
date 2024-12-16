@@ -8,15 +8,15 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { useNavigate } from "react-router-dom"; // hook do nawigacji
-import { UserIcon } from "@heroicons/react/24/outline"; // Import z Heroicons v2
-import Status from "./Status";
+import { useNavigate } from "react-router-dom"; // Hook do nawigacji między stronami
+import { UserIcon } from "@heroicons/react/24/outline"; // Ikona użytkownika
+import Status from "./Status"; // Import komponentu Status
 
 const FriendsList = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // Stan przechowujący wartość wyszukiwania
   const [friends, setFriends] = useState([]); // Lista znajomych pobrana z Firestore
-  const [isOpen, setIsOpen] = useState(true); // Nowy stan do kontrolowania widoczności listy
-  const listRef = useRef(null); // Referencja do listy znajomych
+  const [isOpen, setIsOpen] = useState(true); // Stan kontrolujący widoczność listy znajomych
+  const listRef = useRef(null); // Referencja do elementu listy znajomych
   const navigate = useNavigate(); // Hook do nawigacji
 
   // Pobieranie listy zaobserwowanych użytkowników
@@ -27,14 +27,14 @@ const FriendsList = () => {
         if (currentUser) {
           const followersRef = collection(db, "followers");
 
-          // Pobieramy dokumenty, gdzie "followerId" to aktualny zalogowany użytkownik
+          // Tworzenie zapytania do pobrania zaobserwowanych użytkowników
           const q = query(
             followersRef,
             where("followerId", "==", currentUser.uid)
           );
           const followersSnapshot = await getDocs(q);
 
-          // Dla każdego zaobserwowanego użytkownika (followingId) pobieramy szczegóły profilu
+          // Pobieranie szczegółów profilu dla każdego zaobserwowanego użytkownika
           const friendsData = await Promise.all(
             followersSnapshot.docs.map(async (docSnap) => {
               const followingId = docSnap.data().followingId;
@@ -48,7 +48,7 @@ const FriendsList = () => {
                     profileSnap.data().lastName
                   }`,
                   profilePicture:
-                    profileSnap.data().profilePicture || "/mini.png", // Dodajmy zdjęcie profilowe
+                    profileSnap.data().profilePicture || "/mini.png", // Dodanie zdjęcia profilowego
                 };
               } else {
                 return null;
@@ -56,7 +56,7 @@ const FriendsList = () => {
             })
           );
 
-          // Filtrujemy null wartości, na wypadek błędów w pobieraniu profili
+          // Usunięcie pustych wpisów (np. gdy nie uda się pobrać profilu)
           setFriends(friendsData.filter((friend) => friend !== null));
         }
       } catch (error) {
@@ -67,17 +67,19 @@ const FriendsList = () => {
     fetchFriends();
   }, []);
 
+  // Filtracja znajomych na podstawie wpisanej frazy
   const filteredFriends = friends.filter((friend) =>
     friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Zamknij listę, jeśli kliknięto poza nią
+  // Obsługa kliknięcia poza listą znajomych, aby ją zamknąć
   const handleClickOutside = (event) => {
     if (listRef.current && !listRef.current.contains(event.target)) {
       setIsOpen(false);
     }
   };
 
+  // Dodanie i usunięcie nasłuchiwania zdarzenia kliknięcia
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -85,7 +87,7 @@ const FriendsList = () => {
     };
   }, []);
 
-  // Funkcja do przejścia do profilu znajomego
+  // Funkcja do nawigacji do profilu znajomego
   const goToProfile = (friendId) => {
     navigate(`/profile/${friendId}`);
   };
@@ -93,9 +95,10 @@ const FriendsList = () => {
   return (
     isOpen && (
       <div
-        ref={listRef}
+        ref={listRef} // Przypisanie referencji do kontenera listy znajomych
         className="absolute right-0 mt-0 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white z-50"
       >
+        {/* Pole wyszukiwania znajomych */}
         <input
           type="text"
           placeholder="Wyszukaj znajomego..."
@@ -104,12 +107,14 @@ const FriendsList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         {filteredFriends.length > 0 ? (
+          // Wyświetlanie listy znajomych
           filteredFriends.map((friend) => (
             <div
-              key={friend.id}
+              key={friend.id} // Klucz identyfikujący element listy
               className="border-b border-gray-600 py-2 flex items-center justify-between"
             >
               <div className="flex items-center">
+                {/* Zdjęcie profilowe znajomego */}
                 <img
                   src={friend.profilePicture}
                   alt={`${friend.name}'s profile`}
@@ -120,7 +125,7 @@ const FriendsList = () => {
               <div className="flex items-center space-x-2 relative">
                 {/* Komponent Status */}
                 <Status userId={friend.id} />
-                {/* Ikonka ludzika */}
+                {/* Przycisk nawigujący do profilu znajomego */}
                 <button
                   onClick={() => goToProfile(friend.id)}
                   className="text-gray-400 hover:text-white"
@@ -131,6 +136,7 @@ const FriendsList = () => {
             </div>
           ))
         ) : (
+          // Wyświetlanie informacji o braku wyników wyszukiwania
           <p className="text-gray-400">Brak wyników</p>
         )}
       </div>

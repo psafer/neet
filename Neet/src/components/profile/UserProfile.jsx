@@ -17,24 +17,27 @@ import { UserIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/solid";
 import HomePageHeader from "../header/HomePageHeader";
 
 const UserProfile = () => {
-  const { userId } = useParams();
-  const [posts, setPosts] = useState([]);
-  const [profileData, setProfileData] = useState(null);
-  const [followersCount, setFollowersCount] = useState(0);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
-  const navigate = useNavigate();
-  const currentUser = auth.currentUser;
+  const { userId } = useParams(); // Pobranie ID użytkownika z parametrów URL
+  const [posts, setPosts] = useState([]); // Lista postów użytkownika
+  const [profileData, setProfileData] = useState(null); // Dane profilu użytkownika
+  const [followersCount, setFollowersCount] = useState(0); // Liczba obserwujących
+  const [isFollowing, setIsFollowing] = useState(false); // Czy obecny użytkownik obserwuje tego użytkownika
+  const [loadingFollowStatus, setLoadingFollowStatus] = useState(true); // Status ładowania informacji o obserwacji
+  const navigate = useNavigate(); // Nawigacja między stronami
+  const currentUser = auth.currentUser; // Obecnie zalogowany użytkownik
 
+  // Pobranie danych profilu, postów oraz statusu obserwacji
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
+        // Pobranie danych profilu użytkownika
         const profileRef = doc(db, "profiles", userId);
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
           setProfileData(profileSnap.data());
         }
 
+        // Pobranie postów użytkownika
         const postsCollection = collection(db, "posts");
         const q = query(
           postsCollection,
@@ -48,6 +51,7 @@ const UserProfile = () => {
         }));
         setPosts(userPosts);
 
+        // Pobranie liczby obserwujących
         const followersCollection = collection(db, "followers");
         const followersQuery = query(
           followersCollection,
@@ -56,6 +60,7 @@ const UserProfile = () => {
         const followersSnapshot = await getDocs(followersQuery);
         setFollowersCount(followersSnapshot.size);
 
+        // Sprawdzenie, czy obecny użytkownik obserwuje tego użytkownika
         const followRef = collection(db, "followers");
         const followQuery = query(
           followRef,
@@ -77,9 +82,11 @@ const UserProfile = () => {
     }
   }, [userId, currentUser]);
 
+  // Obsługa obserwowania i zaprzestania obserwowania użytkownika
   const handleFollow = async () => {
     try {
       if (isFollowing) {
+        // Jeśli użytkownik już obserwuje - usuń obserwację
         const followRef = collection(db, "followers");
         const followQuery = query(
           followRef,
@@ -93,12 +100,13 @@ const UserProfile = () => {
         setIsFollowing(false);
         setFollowersCount((prev) => prev - 1);
       } else {
+        // Jeśli użytkownik nie obserwuje - dodaj obserwację
         await addDoc(collection(db, "followers"), {
           followerId: currentUser.uid,
           followingId: userId,
         });
 
-        // Dodanie powiadomienia
+        // Dodanie powiadomienia o nowym obserwującym
         const followerProfileRef = doc(db, "profiles", currentUser.uid);
         const followerProfileSnap = await getDoc(followerProfileRef);
 
@@ -130,6 +138,7 @@ const UserProfile = () => {
     }
   };
 
+  // Nawigacja do szczegółów posta po kliknięciu
   const handlePostClick = (postId) => {
     navigate("/", { state: { highlightedPostId: postId } });
   };

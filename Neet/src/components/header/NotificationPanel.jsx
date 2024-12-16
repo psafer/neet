@@ -12,34 +12,36 @@ import {
 import { db } from "../../firebaseConfig";
 
 const NotificationPanel = ({ userId }) => {
-  const [notifications, setNotifications] = useState([]);
-  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]); // Stan przechowujący listę powiadomień
+  const navigate = useNavigate(); // Hook nawigacji
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return; // Sprawdzenie, czy `userId` jest dostępne
 
+    // Pobranie powiadomień z Firestore w czasie rzeczywistym
     const notificationsRef = collection(
       db,
       "notifications",
       userId,
       "userNotifications"
     );
-    const q = query(notificationsRef, orderBy("date", "desc"));
+    const q = query(notificationsRef, orderBy("date", "desc")); // Sortowanie według daty malejąco
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notificationsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setNotifications(notificationsData);
+      setNotifications(notificationsData); // Aktualizacja stanu z powiadomieniami
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Usunięcie subskrypcji przy odmontowaniu komponentu
   }, [userId]);
 
+  // Usuwanie wszystkich powiadomień
   const deleteNotifications = async () => {
     try {
-      const batch = writeBatch(db);
+      const batch = writeBatch(db); // Tworzenie batcha do usunięcia wielu dokumentów jednocześnie
       notifications.forEach((notif) => {
         const notifRef = doc(
           db,
@@ -50,33 +52,35 @@ const NotificationPanel = ({ userId }) => {
         );
         batch.delete(notifRef);
       });
-      await batch.commit();
-      setNotifications([]);
+      await batch.commit(); // Wysłanie batcha do Firestore
+      setNotifications([]); // Resetowanie stanu po usunięciu
     } catch (error) {
       console.error("Błąd podczas usuwania powiadomień:", error);
     }
   };
 
+  // Obsługa kliknięcia powiadomienia
   const handleNotificationClick = (notif) => {
     if (notif.type === "post" && notif.postId) {
-      // Przejdź do posta
+      // Przekierowanie do posta
       navigate("/", { state: { highlightedPostId: notif.postId } });
     } else if (notif.type === "follow" && notif.followerId) {
-      // Przejdź do profilu obserwującego
+      // Przekierowanie do profilu obserwującego
       navigate(`/profile/${notif.followerId}`);
     } else if (
       (notif.type === "like" || notif.type === "comment") &&
       notif.postId
     ) {
-      // Przejdź do posta, jeśli to polubienie lub komentarz
+      // Przekierowanie do posta dla polubień lub komentarzy
       navigate("/", { state: { highlightedPostId: notif.postId } });
     } else {
-      alert("Nie można obsłużyć tego powiadomienia.");
+      alert("Nie można obsłużyć tego powiadomienia."); // Obsługa nieznanych typów powiadomień
     }
   };
 
   return (
     <div className="absolute right-0 mt-7 w-64 bg-gray-800 shadow-lg rounded-lg p-4 text-white max-h-72 overflow-y-auto pr-2 z-50">
+      {/* Nagłówek panelu powiadomień */}
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-bold">Powiadomienia</h3>
         <button
@@ -86,6 +90,8 @@ const NotificationPanel = ({ userId }) => {
           <i className="fa-solid fa-broom"></i>
         </button>
       </div>
+
+      {/* Lista powiadomień lub informacja o ich braku */}
       {notifications.length === 0 ? (
         <p className="text-gray-400">Brak powiadomień</p>
       ) : (
@@ -95,7 +101,9 @@ const NotificationPanel = ({ userId }) => {
             onClick={() => handleNotificationClick(notif)}
             className="border-b border-gray-600 py-2 px-3 cursor-pointer hover:bg-gray-700 hover:text-orange-300 transition-all rounded"
           >
+            {/* Treść powiadomienia */}
             <p className="text-sm">{notif.message}</p>
+            {/* Data powiadomienia */}
             <span className="text-xs text-gray-400">
               {notif.date ? notif.date.toDate().toLocaleString() : "Brak daty"}
             </span>
@@ -107,7 +115,7 @@ const NotificationPanel = ({ userId }) => {
 };
 
 NotificationPanel.propTypes = {
-  userId: PropTypes.string.isRequired,
+  userId: PropTypes.string.isRequired, // ID użytkownika, dla którego pobierane są powiadomienia
 };
 
 export default NotificationPanel;

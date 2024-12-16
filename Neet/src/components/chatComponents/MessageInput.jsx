@@ -1,21 +1,43 @@
-import { useState, useRef, useEffect } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useEffect, useState, useRef } from "react";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  setDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig";
 import PropTypes from "prop-types";
 import EmojiPicker from "emoji-picker-react";
 
 const MessageInput = ({ conversationId }) => {
-  const [message, setMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiPickerRef = useRef(null);
+  const [message, setMessage] = useState(""); // Treść wiadomości
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Pokazywanie Emoji Picker
+  const emojiPickerRef = useRef(null); // Referencja do Emoji Picker
+  const typingRef = useRef(null); // Referencja do timeoutu "pisze..."
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     setMessage(e.target.value);
 
-    if (!isTyping) {
-      setIsTyping(true);
-      // Można wysłać wskaźnik "pisze" do Firebase (opcjonalne)
+    // Ustawienie wskaźnika "pisze..."
+    try {
+      const typingIndicatorRef = doc(
+        db,
+        "conversations",
+        conversationId,
+        "typing",
+        auth.currentUser.uid
+      );
+      await setDoc(typingIndicatorRef, { isTyping: true });
+
+      // Reset wskaźnika po 2 sekundach braku aktywności
+      clearTimeout(typingRef.current);
+      typingRef.current = setTimeout(async () => {
+        await deleteDoc(typingIndicatorRef); // Usunięcie wskaźnika
+      }, 2000);
+    } catch (error) {
+      console.error("Błąd przy ustawianiu wskaźnika pisania:", error);
     }
   };
 
@@ -30,14 +52,24 @@ const MessageInput = ({ conversationId }) => {
         "messages"
       );
 
+      // Dodanie wiadomości do kolekcji
       await addDoc(messagesRef, {
         content: message.trim(),
         senderId: auth.currentUser.uid,
         timestamp: serverTimestamp(),
       });
 
-      setMessage("");
-      setIsTyping(false);
+      setMessage(""); // Czyszczenie inputa po wysłaniu wiadomości
+
+      // Usunięcie wskaźnika "pisze..." po wysłaniu wiadomości
+      const typingIndicatorRef = doc(
+        db,
+        "conversations",
+        conversationId,
+        "typing",
+        auth.currentUser.uid
+      );
+      await deleteDoc(typingIndicatorRef);
     } catch (error) {
       console.error("Błąd podczas wysyłania wiadomości:", error);
     }
@@ -45,20 +77,20 @@ const MessageInput = ({ conversationId }) => {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      handleSendMessage();
+      handleSendMessage(); // Wysyłanie wiadomości po Enter
     }
   };
 
   const handleEmojiClick = (emojiData) => {
     const emoji = emojiData.emoji;
-    setMessage((prev) => prev + emoji);
+    setMessage((prev) => prev + emoji); // Dodanie emoji do wiadomości
   };
 
   const toggleEmojiPicker = () => {
     setShowEmojiPicker((prev) => !prev);
   };
 
-  // Zamykaj emoji picker, gdy klikniesz poza nim
+  // Zamykaj Emoji Picker, gdy klikniesz poza nim
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -111,7 +143,7 @@ const MessageInput = ({ conversationId }) => {
 };
 
 MessageInput.propTypes = {
-  conversationId: PropTypes.string.isRequired, // ID wybranej konwersacji
+  conversationId: PropTypes.string.isRequired, // ID konwersacji
 };
 
 export default MessageInput;

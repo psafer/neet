@@ -15,13 +15,11 @@ const Status = ({ userId }) => {
 
   useEffect(() => {
     const db = getDatabase();
-
     let currentUserStatusRef = null;
 
-    // Obsługa zmiany statusu użytkownika
-    const handleStatusChange = (user) => {
+    const updateStatus = async (user) => {
       if (user) {
-        // Jeśli użytkownik jest zalogowany, ustaw status
+        // Referencja do statusu użytkownika
         currentUserStatusRef = ref(db, `status/${user.uid}`);
 
         const onlineState = {
@@ -34,24 +32,36 @@ const Status = ({ userId }) => {
           last_changed: serverTimestamp(),
         };
 
-        // Ustaw status "offline" na disconnect
-        onDisconnect(currentUserStatusRef).set(offlineState);
+        try {
+          // Ustaw status "offline" na disconnect
+          await onDisconnect(currentUserStatusRef).set(offlineState);
 
-        // Ustaw status "online"
-        set(currentUserStatusRef, onlineState);
-      } else if (currentUserStatusRef) {
-        // Jeśli użytkownik się wylogowuje, ustaw "offline"
-        set(currentUserStatusRef, {
-          state: "offline",
-          last_changed: serverTimestamp(),
-        });
+          // Ustaw status "available" przy logowaniu
+          await set(currentUserStatusRef, onlineState);
+        } catch (error) {
+          console.error("Błąd podczas ustawiania statusu:", error);
+        }
+      } else {
+        // Użytkownik wylogowany - ustaw "offline" natychmiast
+        if (currentUserStatusRef) {
+          try {
+            await set(currentUserStatusRef, {
+              state: "offline",
+              last_changed: serverTimestamp(),
+            });
+          } catch (error) {
+            console.error("Błąd podczas ustawiania statusu offline:", error);
+          }
+        }
       }
     };
 
-    // Nasłuchuj zmiany użytkownika
-    const unsubscribeAuth = auth.onAuthStateChanged(handleStatusChange);
+    // Nasłuchuj zmian użytkownika
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      updateStatus(user);
+    });
 
-    // Nasłuchuj statusu użytkownika
+    // Nasłuchuj statusu dla innego użytkownika (userId)
     const userStatusRef = ref(db, `status/${userId}`);
     const unsubscribeStatus = onValue(userStatusRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -59,8 +69,14 @@ const Status = ({ userId }) => {
       }
     });
 
-    // Posprzątaj
     return () => {
+      // Posprzątaj przy odmontowaniu komponentu
+      if (currentUserStatusRef) {
+        set(currentUserStatusRef, {
+          state: "offline",
+          last_changed: serverTimestamp(),
+        });
+      }
       unsubscribeAuth();
       unsubscribeStatus();
     };
