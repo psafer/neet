@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "../../firebaseConfig";
+import { db, auth } from "../../config/firebaseConfig";
 import HomePageHeader from "../header/HomePageHeader";
 import PostForm from "../posts/PostForm";
 import PostItem from "../posts/PostItem";

@@ -7,7 +7,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig";
+import { db, auth } from "../../config/firebaseConfig";
 import PropTypes from "prop-types";
 
 // Komponent renderujący pojedynczą wiadomość

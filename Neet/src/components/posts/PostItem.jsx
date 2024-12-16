@@ -10,7 +10,7 @@ import {
   getDocs,
   onSnapshot,
 } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { db } from "../../config/firebaseConfig";
 
 const PostItem = ({
   post,

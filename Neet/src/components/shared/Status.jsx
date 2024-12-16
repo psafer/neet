@@ -8,7 +8,7 @@ import {
   onDisconnect,
   serverTimestamp,
 } from "firebase/database";
-import { auth } from "../../firebaseConfig";
+import { auth } from "../../config/firebaseConfig";
 
 const Status = ({ userId }) => {
   const [status, setStatus] = useState("offline");

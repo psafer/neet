@@ -7,7 +7,7 @@ import {
   setDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { db, auth } from "../../firebaseConfig";
+import { db, auth } from "../../config/firebaseConfig";
 import PropTypes from "prop-types";
 import EmojiPicker from "emoji-picker-react";
 

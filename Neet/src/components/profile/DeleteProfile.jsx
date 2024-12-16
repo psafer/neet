@@ -1,4 +1,4 @@
-import { auth, db } from "../../firebaseConfig";
+import { auth, db } from "../../config/firebaseConfig";
 import { deleteUser } from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 import PropTypes from "prop-types";

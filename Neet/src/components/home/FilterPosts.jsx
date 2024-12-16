@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { HomeIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db, auth } from "../../firebaseConfig";
+import { db, auth } from "../../config/firebaseConfig";
 
 const FilterPosts = ({ posts, setFilteredPosts }) => {
   const [filter, setFilter] = useState("all"); // Stan filtra: "all" lub "friends"
