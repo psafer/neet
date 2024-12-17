@@ -149,7 +149,7 @@ const UserProfile = () => {
       <main className="flex flex-1 justify-center items-start pt-14">
         <div className="w-5/6 p-4">
           {profileData && (
-            <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 mx-auto max-w-3xl flex items-center">
+            <div className="bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 mb-6 mx-auto w-full max-w-3xl flex flex-col sm:flex-row items-center text-center sm:text-left">
               {/* Zdjęcie profilowe */}
               <img
                 src={profileData.profilePicture || "/mini.png"}
@@ -158,7 +158,7 @@ const UserProfile = () => {
               />
 
               {/* Informacje o użytkowniku */}
-              <div className="ml-6 flex-grow">
+              <div className="ml-0 sm:ml-6 flex-grow text-center sm:text-left">
                 <h1 className="text-3xl font-bold mb-2">
                   {profileData.firstName} {profileData.lastName}
                 </h1>
@@ -180,16 +180,18 @@ const UserProfile = () => {
               </div>
 
               {/* Ikony i liczby */}
-              <div className="ml-auto flex items-center space-x-8">
-                <div className="flex flex-col items-center">
+              <div className="ml-0 sm:ml-auto flex flex-row items-center justify-center sm:space-x-8">
+                <div className="flex flex-col items-center w-24">
                   <ClipboardDocumentListIcon className="w-10 h-10 text-orange-500" />
                   <span className="text-lg font-bold">{posts.length}</span>
-                  <p className="text-gray-400 text-sm">Posty</p>
+                  <p className="text-gray-400 text-sm text-center">Posty</p>
                 </div>
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center w-24">
                   <UserIcon className="w-10 h-10 text-blue-500" />
                   <span className="text-lg font-bold">{followersCount}</span>
-                  <p className="text-gray-400 text-sm">Obserwujący</p>
+                  <p className="text-gray-400 text-sm text-center">
+                    Obserwujący
+                  </p>
                 </div>
               </div>
             </div>
