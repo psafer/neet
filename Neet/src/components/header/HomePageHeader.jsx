@@ -160,12 +160,12 @@ const HomePageHeader = () => {
   return (
     <header className="bg-gray-800 p-1 h-16 shadow-md flex justify-between items-center w-full fixed top-0 left-0 z-50">
       {/* Logo i wyszukiwarka */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 w-full">
         <Link to="/">
           <img
             src="/mini.png"
             alt="Logo"
-            className="w-auto h-14 rounded-full cursor-pointer"
+            className="h-14 w-14 sm:h-16 sm:w-16 object-contain rounded-full cursor-pointer aspect-square"
           />
         </Link>
 
@@ -221,7 +221,7 @@ const HomePageHeader = () => {
 
       {/* Elementy użytkownika */}
       {user && (
-        <div className="flex items-center relative">
+        <div className="flex items-center relative space-x-4 mr-8">
           <div className="relative ml-4">
             <BellIcon
               className={`w-8 h-8 text-gray-400 cursor-pointer ${
@@ -242,7 +242,7 @@ const HomePageHeader = () => {
           </div>
 
           <UserGroupIcon
-            className="w-8 h-8 text-gray-400 cursor-pointer mr-4 friends-icon"
+            className="w-8 h-8 min-w-[2rem] min-h-[2rem] text-gray-400 cursor-pointer friends-icon"
             onClick={() => setIsFriendsListOpen((prev) => !prev)}
           />
           {isFriendsListOpen && (
