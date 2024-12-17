@@ -17,7 +17,7 @@
     ]
   },
   "storage": {
-    "rules": "src/config/firestore.rules"
+    "rules": "src/config/storage.rules"
   },
   "emulators": {
     "firestore": {

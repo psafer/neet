@@ -23,13 +23,13 @@ import FilterPosts from "./FilterPosts";
 import ChatPanel from "../chatComponents/ChatPanel"; // Import ChatPanel
 
 const HomePage = () => {
-  const [posts, setPosts] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
-  const [user, setUser] = useState(null);
-  const [profilePicture, setProfilePicture] = useState(null);
-  const [newComment, setNewComment] = useState({});
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [profiles, setProfiles] = useState({});
+  const [posts, setPosts] = useState([]); // wszystkie posty
+  const [filteredPosts, setFilteredPosts] = useState([]); // filtrowane posty
+  const [user, setUser] = useState(null); // pobieranie użytkownika
+  const [profilePicture, setProfilePicture] = useState(null); // pobieranie zdjęcia profilowego
+  const [newComment, setNewComment] = useState({}); // dodawanie nowych komentarzy
+  const [unreadCount, setUnreadCount] = useState(0); // licznik powiadomień
+  const [profiles, setProfiles] = useState({}); // profile
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
@@ -96,6 +96,22 @@ const HomePage = () => {
       }));
 
       setPosts(postsData);
+      setFilteredPosts(postsData);
+
+      // Przewijanie do posta po załadowaniu danych
+      if (highlightedPostId) {
+        setTimeout(() => {
+          const postElement = document.getElementById(highlightedPostId);
+          if (postElement) {
+            postElement.scrollIntoView({ behavior: "smooth" }); // Przewiń do posta
+            postElement.classList.add("highlighted-post");
+            setTimeout(
+              () => postElement.classList.remove("highlighted-post"),
+              3000
+            );
+          }
+        }, 100); // Dodaj krótki timeout, aby upewnić się, że DOM się załadował
+      }
     } catch (error) {
       console.error("Błąd podczas pobierania postów:", error);
     }
