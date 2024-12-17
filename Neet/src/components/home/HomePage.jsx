@@ -17,7 +17,7 @@ import { db, auth } from "../../config/firebaseConfig";
 import HomePageHeader from "../header/HomePageHeader";
 import PostForm from "../posts/PostForm";
 import PostItem from "../posts/PostItem";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ScrollToTopButton from "./ScrollToTopButton";
 import FilterPosts from "./FilterPosts";
 import ChatPanel from "../chatComponents/ChatPanel"; // Import ChatPanel
@@ -30,6 +30,7 @@ const HomePage = () => {
   const [newComment, setNewComment] = useState({}); // dodawanie nowych komentarzy
   const [unreadCount, setUnreadCount] = useState(0); // licznik powiadomień
   const [profiles, setProfiles] = useState({}); // profile
+  const navigate = useNavigate();
   const location = useLocation();
   const highlightedPostId = location.state?.highlightedPostId || null;
 
@@ -110,7 +111,8 @@ const HomePage = () => {
               3000
             );
           }
-        }, 100); // Dodaj krótki timeout, aby upewnić się, że DOM się załadował
+        }, 100);
+        navigate(".", { replace: true, state: {} });
       }
     } catch (error) {
       console.error("Błąd podczas pobierania postów:", error);
