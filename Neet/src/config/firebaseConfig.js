@@ -4,7 +4,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { getDatabase } from "firebase/database"; // Import Realtime Database
+import { getDatabase } from "firebase/database";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -17,7 +17,7 @@ const firebaseConfig = {
   appId: "1:887045727826:web:5cba03346c10b892d5618b",
   measurementId: "G-4SFQGPBCJQ",
   databaseURL:
-    "https://neet-f16e6-default-rtdb.europe-west1.firebasedatabase.app/", // Add the database URL
+    "https://neet-f16e6-default-rtdb.europe-west1.firebasedatabase.app/",
 };
 
 // Initialize Firebase
@@ -30,4 +30,4 @@ export const storage = getStorage(app);
 export const analytics = getAnalytics(app);
 
 // Initialize Realtime Database
-export const realtimeDb = getDatabase(app); // Export Realtime Database
+export const realtimeDb = getDatabase(app);

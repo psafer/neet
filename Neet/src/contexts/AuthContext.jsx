@@ -3,42 +3,57 @@ import PropTypes from "prop-types";
 import { auth } from "../config/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 
-export const AuthContext = React.createContext(); // Export AuthContext
+// Tworzenie kontekstu autoryzacji i eksportowanie go
+export const AuthContext = React.createContext();
 
+/**
+ * Komponent dostarczający kontekst autoryzacji dla całej aplikacji.
+ * Odpowiada za monitorowanie stanu zalogowanego użytkownika i udostępnianie go za pomocą kontekstu.
+ * @param {object} props - Obiekt z dziećmi komponentu
+ */
 export function AuthProvider({ children }) {
+  // Stan do przechowywania aktualnego użytkownika
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Stan do śledzenia procesu ładowania (inicjalizacji autoryzacji)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up an authentication state listener
+    /**
+     * Funkcja nasłuchująca zmiany stanu autoryzacji.
+     * Wywoływana automatycznie, gdy użytkownik się zaloguje lub wyloguje.
+     */
     const unsubscribe = onAuthStateChanged(
       auth,
       (user) => {
-        setCurrentUser(user); // Update the current user when it changes
-        setLoading(false); // Stop loading once authentication state is determined
+        setCurrentUser(user); // Aktualizacja stanu bieżącego użytkownika
+        setLoading(false); // Zakończenie ładowania po określeniu stanu
       },
       (error) => {
-        console.error("Error with auth state change:", error);
-        setLoading(false); // Ensure the loading state is reset even on error
+        console.error("Błąd przy zmianie stanu autoryzacji:", error);
+        setLoading(false); // Zakończenie ładowania nawet w przypadku błędu
       }
     );
 
-    // Clean up the listener on component unmount
+    // Zwracana funkcja wyczyści nasłuchiwanie przy odmontowaniu komponentu
     return () => unsubscribe();
   }, []);
 
+  // Wartość, która będzie udostępniana innym komponentom w aplikacji
   const value = {
-    currentUser,
+    currentUser, // Aktualny użytkownik (null, jeśli brak zalogowanego użytkownika)
   };
 
   return (
+    // Udostępnienie kontekstu dla dzieci komponentu
     <AuthContext.Provider value={value}>
-      {!loading && children} {/* Render children only when not loading */}
+      {!loading && children}{" "}
+      {/* Renderowanie dzieci tylko, jeśli zakończono ładowanie */}
     </AuthContext.Provider>
   );
 }
 
-// Add PropTypes validation for the children prop
+// Walidacja typu dla prop 'children' za pomocą PropTypes
 AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node.isRequired, // Dzieci muszą być węzłem React
 };
