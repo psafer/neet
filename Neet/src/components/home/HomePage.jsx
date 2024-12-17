@@ -74,6 +74,7 @@ const HomePage = () => {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unreadCount]);
 
   const fetchProfiles = async () => {
@@ -336,7 +337,7 @@ const HomePage = () => {
                     handleCommentChange={handleCommentChange}
                     newComment={newComment}
                     handleAddComment={handleAddComment}
-                    handleDeleteComment={handleDeleteComment} // Dodano przekazanie handleDeleteComment
+                    handleDeleteComment={handleDeleteComment}
                     currentUserId={user?.uid}
                     handleDeletePost={handleDeletePost}
                     handleEditPost={handleEditPost}
