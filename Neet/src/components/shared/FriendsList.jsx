@@ -48,7 +48,8 @@ const FriendsList = () => {
                     profileSnap.data().lastName
                   }`,
                   profilePicture:
-                    profileSnap.data().profilePicture || "/mini.png", // Dodanie zdjęcia profilowego
+                    profileSnap.data().profilePicture ||
+                    "../../assets/mini.png",
                 };
               } else {
                 return null;
