@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { auth } from "../../config/firebaseConfig";
+import { auth, db } from "../../config/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
+import { doc, setDoc } from "firebase/firestore";
 
 const RegisterPage = () => {
   const [email, setEmail] = useState(""); // Przechowywanie adresu e-mail
@@ -53,11 +54,26 @@ const RegisterPage = () => {
 
     try {
       // Rejestracja użytkownika za pomocą e-maila i hasła
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Tworzenie profilu użytkownika w Firestore z adresem e-mail
+      await setDoc(doc(db, "profiles", user.uid), {
+        email: user.email, // Przekazanie adresu e-mail
+        firstName: "", // Placeholder na imię (uzupełniane później w CreateProfilePage)
+        lastName: "", // Placeholder na nazwisko
+        profilePicture:
+          "https://firebasestorage.googleapis.com/v0/b/neet-f16e6.appspot.com/o/assets%2Fmini.png?alt=media&token=ae661abb-b923-45c9-ae56-a7dde20ba308", // Domyślne zdjęcie profilowe
+      });
+
       navigate("/createProfilePage"); // Przekierowanie na stronę tworzenia profilu
     } catch (error) {
-      console.error(error);
-      setError(error.message); // Przechwycenie i wyświetlenie błędu
+      console.error("Błąd rejestracji:", error);
+      setError(error.message); // Wyświetlenie komunikatu o błędzie
     }
   };
 
