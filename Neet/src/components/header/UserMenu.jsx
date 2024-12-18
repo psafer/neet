@@ -48,12 +48,12 @@ UserMenu.displayName = "UserMenu";
 // PropTypes dla weryfikacji danych przekazanych do komponentu
 UserMenu.propTypes = {
   user: PropTypes.shape({
-    uid: PropTypes.string.isRequired, // ID użytkownika
-    displayName: PropTypes.string, // Wyświetlana nazwa użytkownika
-    firstName: PropTypes.string, // Imię użytkownika
-    lastName: PropTypes.string, // Nazwisko użytkownika
+    uid: PropTypes.string.isRequired,
+    displayName: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
   }).isRequired,
-  onSignOut: PropTypes.func.isRequired, // Funkcja obsługująca wylogowanie użytkownika
+  onSignOut: PropTypes.func.isRequired,
 };
 
 export default UserMenu;
