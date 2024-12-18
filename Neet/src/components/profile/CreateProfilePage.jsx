@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../../config/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/UseAuth"; // Pobranie kontekstu autoryzacji
 import { useNavigate } from "react-router-dom";
 
@@ -12,17 +12,43 @@ const CreateProfilePage = () => {
   const { currentUser } = useAuth(); // Aktualnie zalogowany użytkownik z kontekstu
   const navigate = useNavigate(); // Hook do nawigacji
 
-  // Funkcja obsługująca tworzenie profilu
+  useEffect(() => {
+    // Pobierz istniejący profil z Firestore, jeśli już istnieje
+    const fetchProfile = async () => {
+      if (currentUser) {
+        const userDocRef = doc(db, "profiles", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        // Ustawienie istniejących danych profilu, jeśli istnieją
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setFirstName(userData.firstName || ""); // Ustawienie imienia
+          setLastName(userData.lastName || ""); // Ustawienie nazwiska
+          setBio(userData.bio || ""); // Ustawienie bio
+        }
+      }
+    };
+    fetchProfile();
+  }, [currentUser]);
+
+  // Funkcja obsługująca tworzenie lub aktualizację profilu
   const handleCreateProfile = async (e) => {
     e.preventDefault(); // Zapobiega przeładowaniu strony po wysłaniu formularza
 
     try {
-      // Dodanie danych profilu do Firestore
-      await setDoc(doc(db, "profiles", currentUser.uid), {
-        firstName,
-        lastName,
-        bio,
-      });
+      const userDocRef = doc(db, "profiles", currentUser.uid);
+
+      // Tworzenie lub aktualizacja danych profilu w Firestore
+      await setDoc(
+        userDocRef,
+        {
+          firstName, // Imię
+          lastName, // Nazwisko
+          bio, // Bio użytkownika
+          email: currentUser.email, // Dodanie e-maila użytkownika
+        },
+        { merge: true } // Zapobiega nadpisaniu istniejących pól
+      );
 
       // Przekierowanie na stronę główną po pomyślnym utworzeniu profilu
       navigate("/");
