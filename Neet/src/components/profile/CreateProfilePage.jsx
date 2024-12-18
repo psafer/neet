@@ -33,7 +33,7 @@ const CreateProfilePage = () => {
 
   // Funkcja obsługująca tworzenie lub aktualizację profilu
   const handleCreateProfile = async (e) => {
-    e.preventDefault(); // Zapobiega przeładowaniu strony po wysłaniu formularza
+    e.preventDefault();
 
     try {
       const userDocRef = doc(db, "profiles", currentUser.uid);
@@ -42,19 +42,19 @@ const CreateProfilePage = () => {
       await setDoc(
         userDocRef,
         {
-          firstName, // Imię
-          lastName, // Nazwisko
-          bio, // Bio użytkownika
-          email: currentUser.email, // Dodanie e-maila użytkownika
+          firstName,
+          lastName,
+          bio,
+          email: currentUser.email,
         },
-        { merge: true } // Zapobiega nadpisaniu istniejących pól
+        { merge: true } // Zapobieganie nadpisaniu istniejących pól
       );
 
       // Przekierowanie na stronę główną po pomyślnym utworzeniu profilu
       navigate("/");
     } catch (error) {
-      console.error("Błąd podczas tworzenia profilu:", error); // Logowanie błędu do konsoli
-      alert("Wystąpił błąd podczas tworzenia profilu."); // Wyświetlenie komunikatu o błędzie
+      console.error("Błąd podczas tworzenia profilu:", error);
+      alert("Wystąpił błąd podczas tworzenia profilu.");
     }
   };
 
