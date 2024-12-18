@@ -38,6 +38,7 @@ const Status = ({ userId }) => {
 
           // Ustaw status "available" przy logowaniu
           await set(currentUserStatusRef, onlineState);
+          console.log("Zmiana statusu na dostępny");
         } catch (error) {
           console.error("Błąd podczas ustawiania statusu:", error);
         }
