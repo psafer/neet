@@ -2,14 +2,21 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { auth } from "../config/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
+import {
+  getDatabase,
+  ref,
+  set,
+  onDisconnect,
+  serverTimestamp,
+} from "firebase/database";
 
 // Tworzenie kontekstu autoryzacji i eksportowanie go
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext();
 
 /**
  * Komponent dostarczający kontekst autoryzacji dla całej aplikacji.
  * Odpowiada za monitorowanie stanu zalogowanego użytkownika i udostępnianie go za pomocą kontekstu.
- * @param {object} props - Obiekt z dziećmi komponentu
  */
 export function AuthProvider({ children }) {
   // Stan do przechowywania aktualnego użytkownika
@@ -19,14 +26,42 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const db = getDatabase();
+
     /**
-     * Funkcja nasłuchująca zmiany stanu autoryzacji.
-     * Wywoływana automatycznie, gdy użytkownik się zaloguje lub wyloguje.
+     * Funkcja aktualizująca status użytkownika na "available".
+     * Ustawia także "offline" w przypadku disconnectu.
      */
+    const updateStatus = async (user) => {
+      if (user) {
+        const userStatusRef = ref(db, `status/${user.uid}`);
+
+        const onlineState = {
+          state: "available",
+          last_changed: serverTimestamp(),
+        };
+
+        const offlineState = {
+          state: "offline",
+          last_changed: serverTimestamp(),
+        };
+
+        // Ustaw "offline" przy disconnect
+        await onDisconnect(userStatusRef).set(offlineState);
+
+        // Ustaw status na "available"
+        await set(userStatusRef, onlineState);
+      }
+    };
+
+    // Funkcja nasłuchująca zmiany stanu autoryzacji
     const unsubscribe = onAuthStateChanged(
       auth,
       (user) => {
         setCurrentUser(user); // Aktualizacja stanu bieżącego użytkownika
+        if (user) {
+          updateStatus(user); // Ustaw status użytkownika jako "available"
+        }
         setLoading(false); // Zakończenie ładowania po określeniu stanu
       },
       (error) => {
