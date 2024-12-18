@@ -241,8 +241,8 @@ const PostItem = ({
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center">
+        <div className="flex flex-wrap items-center justify-between mt-2 text-sm">
+          <div className="flex items-center space-x-4 mb-2 sm:mb-0">
             <button
               onClick={() => handleLike(post.id)}
               className={`flex items-center text-sm ${
@@ -268,7 +268,7 @@ const PostItem = ({
               {comments.length}
             </button>
           </div>
-          <div className="mt-2 text-sm text-gray-500">
+          <div className="text-gray-400 mt-2 sm:mt-0 text-xs sm:text-sm">
             Opublikowano:{" "}
             {post.date
               ? format(post.date.toDate(), "dd.MM.yyyy, HH:mm")

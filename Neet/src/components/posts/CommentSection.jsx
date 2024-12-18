@@ -78,25 +78,25 @@ const CommentSection = ({
   return (
     <div className="mt-4 border-t border-gray-600 pt-2" ref={commentSectionRef}>
       {/* Input do dodawania komentarzy */}
-      <div className="mt-2 flex relative">
+      <div className="mt-2 flex relative items-center w-full">
         <input
           type="text"
           placeholder="Twój komentarz..."
           value={newComment[post.id] || ""} // Wyświetlanie aktualnej treści komentarza
           onChange={(e) => handleCommentChange(post.id, e)} // Obsługa zmian w polu tekstowym
           onKeyDown={handleKeyDown} // Obsługa Enter
-          className="flex-grow p-2 bg-gray-700 text-white rounded"
+          className="flex-grow p-2 pr-0 bg-gray-700 text-white rounded"
         />
         <button
           onClick={handleAddCommentClick}
-          className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2"
+          className="absolute right-10 text-orange-500 hover:bg-gray-600 rounded p-2 flex-shrink-0"
         >
           <i className="fa-solid fa-paper-plane"></i>
         </button>
         <button
           type="button"
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="bg-transparent text-orange-500 hover:bg-gray-600 rounded p-2 ml-2"
+          className="absolute right-2 text-orange-500 hover:bg-gray-600 rounded p-2 flex-shrink-0"
         >
           <i className="fa-solid fa-smile"></i>
         </button>
