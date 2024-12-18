@@ -8,7 +8,6 @@ const CreateProfilePage = () => {
   // Stany do przechowywania danych wprowadzonych w formularzu
   const [firstName, setFirstName] = useState(""); // Imię
   const [lastName, setLastName] = useState(""); // Nazwisko
-  const [gender, setGender] = useState(""); // Płeć
   const [bio, setBio] = useState(""); // Bio użytkownika
   const { currentUser } = useAuth(); // Aktualnie zalogowany użytkownik z kontekstu
   const navigate = useNavigate(); // Hook do nawigacji
@@ -22,7 +21,6 @@ const CreateProfilePage = () => {
       await setDoc(doc(db, "profiles", currentUser.uid), {
         firstName,
         lastName,
-        gender,
         bio,
       });
 
@@ -80,30 +78,6 @@ const CreateProfilePage = () => {
               onChange={(e) => setLastName(e.target.value)} // Aktualizacja stanu `lastName`
               required
             />
-          </div>
-
-          {/* Select dla płci */}
-          <div className="mb-4">
-            <label
-              htmlFor="gender"
-              className="block text-orange-500 text-sm font-bold mb-2"
-            >
-              Płeć:
-            </label>
-            <select
-              id="gender"
-              className="shadow appearance-none border border-orange-500 rounded w-full py-2 px-3 text-gray-200 bg-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-orange-500"
-              value={gender}
-              onChange={(e) => setGender(e.target.value)} // Aktualizacja stanu `gender`
-              required
-            >
-              <option value="" disabled>
-                Wybierz płeć
-              </option>
-              <option value="male">Mężczyzna</option>
-              <option value="female">Kobieta</option>
-              <option value="other">Inna</option>
-            </select>
           </div>
 
           {/* Pole tekstowe dla bio */}

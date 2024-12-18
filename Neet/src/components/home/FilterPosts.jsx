@@ -43,7 +43,7 @@ const FilterPosts = ({ posts, setFilteredPosts }) => {
       );
       setFilteredPosts(filtered);
     }
-  }, [filter, posts, followingList, setFilteredPosts]); // Aktualizuj za każdym razem, gdy zmieni się filtr, posty lub lista znajomych
+  }, [filter, posts, followingList, setFilteredPosts]); // Aktualizuj za każdym razem, gdy zmieni się filtr
 
   return (
     <div className="w-full max-w-3xl flex justify-center mb-4">

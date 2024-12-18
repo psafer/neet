@@ -35,11 +35,22 @@ const HomePageHeader = () => {
     const fetchProfile = async () => {
       const currentUser = auth.currentUser;
       if (currentUser) {
-        setUser(currentUser);
-        const docRef = doc(db, "profiles", currentUser.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setProfilePicture(docSnap.data().profilePicture);
+        const profileRef = doc(db, "profiles", currentUser.uid);
+        const profileSnap = await getDoc(profileRef);
+
+        if (profileSnap.exists()) {
+          // Aktualizacja stanu użytkownika o dane z Firebase Authentication i Firestore
+          setUser({
+            ...currentUser, // Dane z Firebase Authentication
+            firstName: profileSnap.data().firstName, // Dodanie firstName z Firestore
+            lastName: profileSnap.data().lastName, // Dodanie lastName z Firestore
+          });
+
+          // Ustawienie zdjęcia profilowego
+          setProfilePicture(profileSnap.data().profilePicture);
+        } else {
+          // W przypadku braku danych w Firestore, ustaw dane z Firebase Authentication
+          setUser(currentUser);
         }
       }
     };
