@@ -1,7 +1,8 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { db } from "../../config/firebaseConfig";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 const SearchBar = ({ onUserSelect }) => {
   const [searchQuery, setSearchQuery] = useState(""); // Stan przechowujący aktualny wpis w polu wyszukiwania
@@ -45,6 +46,8 @@ const SearchBar = ({ onUserSelect }) => {
         placeholder="Znajdź użytkownika..."
         className="bg-gray-700 text-white px-4 py-2 rounded-full focus:outline-none w-full"
       />
+      {/* Ikona lupki */}
+      <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
       {/* Lista wyników wyszukiwania */}
       <ul className="absolute bg-gray-800 text-white w-full max-h-60 overflow-y-auto rounded-lg shadow-lg z-50 mt-2">
         {/* Wyświetlanie komunikatu, jeśli nie znaleziono użytkowników */}

@@ -5,21 +5,16 @@ import {
   query,
   orderBy,
   onSnapshot,
-  getDocs,
   doc,
   getDoc,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  BellIcon,
-  UserGroupIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
+import { BellIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import FriendsList from "../shared/FriendsList";
 import NotificationPanel from "./NotificationPanel";
 import UserMenu from "./UserMenu";
-import debounce from "lodash/debounce";
+import SearchBar from "../shared/SearchBar";
 
 const HomePageHeader = () => {
   const [profilePicture, setProfilePicture] = useState(null); // Zdjęcie profilowe użytkownika
@@ -27,15 +22,12 @@ const HomePageHeader = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // Status otwarcia panelu powiadomień
   const [isMenuOpen, setIsMenuOpen] = useState(false); // Status otwarcia menu użytkownika
   const [isFriendsListOpen, setIsFriendsListOpen] = useState(false); // Status otwarcia listy znajomych
-  const [searchQuery, setSearchQuery] = useState(""); // Wyszukiwane zapytanie
-  const [searchResults, setSearchResults] = useState([]); // Wyniki wyszukiwania
   const [notificationCount, setNotificationCount] = useState(0); // Liczba powiadomień
   const [hasNewNotifications, setHasNewNotifications] = useState(false); // Status nowych powiadomień
 
   const menuRef = useRef(null); // Referencja do menu użytkownika
   const friendsListRef = useRef(null); // Referencja do listy znajomych
   const notificationsRef = useRef(null); // Referencja do panelu powiadomień
-  const searchRef = useRef(null); // Referencja do wyszukiwarki
   const navigate = useNavigate();
 
   // Pobranie danych profilu użytkownika
@@ -112,43 +104,6 @@ const HomePageHeader = () => {
     };
   }, []);
 
-  // Pobranie wyników wyszukiwania z Firebase
-  const fetchSearchResults = debounce(async (searchTerm) => {
-    if (searchTerm.length > 1) {
-      const usersRef = collection(db, "profiles");
-      const q = query(usersRef, orderBy("firstName"));
-      try {
-        const querySnapshot = await getDocs(q);
-
-        const filteredResults = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((user) => {
-            const fullName = `${user.firstName.toLowerCase()} ${user.lastName.toLowerCase()}`;
-            return fullName.includes(searchTerm.toLowerCase());
-          });
-
-        setSearchResults(filteredResults);
-      } catch (error) {
-        console.error("Błąd podczas pobierania wyników wyszukiwania:", error);
-      }
-    } else {
-      setSearchResults([]);
-    }
-  }, 500);
-
-  // Obsługa zmiany w wyszukiwarce
-  const handleSearchChange = (e) => {
-    const searchTerm = e.target.value;
-    setSearchQuery(searchTerm);
-    fetchSearchResults(searchTerm);
-  };
-
-  // Przekierowanie do wybranego profilu z wyników wyszukiwania
-  const handleSearchSelect = (userId) => {
-    navigate(`/profile/${userId}`);
-    setSearchQuery("");
-  };
-
   // Przełączanie stanu panelu powiadomień
   const toggleNotifications = () => {
     setIsNotificationsOpen((prev) => !prev);
@@ -170,49 +125,11 @@ const HomePageHeader = () => {
         </Link>
 
         {/* Search Bar */}
-        <div className="relative w-full md:w-64">
-          <div className="hidden md:flex items-center">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Znajdź użytkownika..."
-              className="bg-gray-700 text-white px-4 py-2 rounded-full focus:outline-none w-full"
-            />
-            <MagnifyingGlassIcon className="w-5 h-5 absolute right-2 top-2 text-gray-400" />
-          </div>
-          {searchQuery && (
-            <ul
-              ref={searchRef}
-              className="absolute bg-gray-800 text-white w-full max-h-60 overflow-y-auto rounded-lg shadow-lg z-50 mt-2"
-            >
-              {searchResults.length === 0 ? (
-                <li className="p-2 text-gray-400">
-                  Nie znaleziono użytkownika
-                </li>
-              ) : (
-                searchResults.map((result) => (
-                  <li
-                    key={result.id}
-                    onClick={() => handleSearchSelect(result.id)}
-                    className="cursor-pointer hover:bg-gray-700 p-2 flex items-center"
-                  >
-                    <img
-                      src={result.profilePicture || "/mini.png"}
-                      alt={`${result.firstName} ${result.lastName}`}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                    {result.firstName} {result.lastName}
-                  </li>
-                ))
-              )}
-            </ul>
-          )}
-        </div>
+        <SearchBar onUserSelect={(userId) => navigate(`/profile/${userId}`)} />
       </div>
 
       {/* Środkowy nagłówek */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+      <div className="hidden sm:flex absolute left-1/2 transform -translate-x-1/2 flex-col items-center">
         <img src="/napis.png" alt="Home Page" className="h-10 md:h-10 h-8" />
         <p className="text-sm text-gray-400 mt-1 hidden md:block">
           Social Network
