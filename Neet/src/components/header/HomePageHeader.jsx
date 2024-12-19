@@ -89,7 +89,7 @@ const HomePageHeader = () => {
     }
   };
 
-  // Obsługa kliknięcia poza komponenty (zamykanie paneli)
+  // Obsługa kliknięcia poza komponenty 
   const handleClickOutside = (event) => {
     if (
       notificationsRef.current &&

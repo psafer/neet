@@ -16,7 +16,6 @@ export const AuthContext = React.createContext();
 
 /**
  * Komponent dostarczający kontekst autoryzacji dla całej aplikacji.
- * Odpowiada za monitorowanie stanu zalogowanego użytkownika i udostępnianie go za pomocą kontekstu.
  */
 export function AuthProvider({ children }) {
   // Stan do przechowywania aktualnego użytkownika
