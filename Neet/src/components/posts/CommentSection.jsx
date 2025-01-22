@@ -5,7 +5,7 @@ import EmojiPicker from "emoji-picker-react";
 import { Link } from "react-router-dom";
 
 const CommentSection = ({
-  post = { comments: [] }, // Domyślna wartość, aby uniknąć błędów, jeśli brak komentarzy
+  post = { comments: [] }, // Domyślna wartość
   newComment,
   handleCommentChange,
   handleAddComment,
