@@ -125,9 +125,9 @@ const CommentSection = ({
             >
               {/* Obrazek autora komentarza */}
               <img
-                src={comment.authorPicture || "/default-avatar.png"}
+                src={comment.authorPicture || "/mini.png"}
                 alt={`${comment.author}'s profile`}
-                onError={(e) => (e.target.src = "/default-avatar.png")} // Ustaw domyślny obraz w razie błędu
+                onError={(e) => (e.target.src = "/mini.png")} // Ustaw domyślny obraz w razie błędu
                 className="w-8 h-8 rounded-full mr-3"
               />
               {/* Treść komentarza */}
