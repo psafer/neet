@@ -12,7 +12,7 @@ import { db, auth } from "../../config/firebaseConfig";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import Status from "../shared/Status"; // Importujemy komponent Status
+import Status from "../shared/Status";
 
 const ChatPanel = () => {
   const [friends, setFriends] = useState([]); // Lista znajomych
